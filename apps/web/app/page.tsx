@@ -232,6 +232,14 @@ async function chatErrorFromResponse(response: Response): Promise<ChatResponseEr
   return new ChatResponseError("这次没有得到完整回应。请重新发送。", "retry");
 }
 
+function fitComposer(textarea: HTMLTextAreaElement) {
+  const maximumHeight = 132;
+  textarea.style.height = "auto";
+  const height = Math.min(textarea.scrollHeight, maximumHeight);
+  textarea.style.height = `${height}px`;
+  textarea.style.overflowY = textarea.scrollHeight > maximumHeight ? "auto" : "hidden";
+}
+
 function emptyModelSettings(): ModelSettings {
   return {
     protocol: "chat_completions",
@@ -442,6 +450,10 @@ export default function Home() {
     const stream = conversationStreamRef.current;
     if (stream) stream.scrollTo({ top: stream.scrollHeight, behavior: "smooth" });
   }, [messages, pending]);
+
+  useEffect(() => {
+    if (composerRef.current) fitComposer(composerRef.current);
+  }, [input]);
 
   function startRecommendationConversation(item: Recommendation) {
     switchMode("general_companion");
@@ -1830,7 +1842,7 @@ export default function Home() {
                 }}
                 placeholder={mode === "book_room" ? "不必整理好。说说那句还留在心里的话……" : "从一个困惑、判断，或最近挥之不去的念头开始……"}
                 ref={composerRef}
-                rows={3}
+                rows={1}
                 value={input}
               />
               <div className="composer-footer">
