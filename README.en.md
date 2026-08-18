@@ -70,6 +70,14 @@ interface. It does not become companion memory and is not automatically sent
 to a model provider. Books, documents, and reading traces remain in the
 separate **Local Library** area in the upper-right corner.
 
+The settings screen separates two usable connection layers: the **Backend
+default model** comes from deployment environment settings and keeps provider
+keys in the server process; **local model profiles** are user-managed
+connections for Ollama, LAN, or other OpenAI-compatible services. Both are
+visible in the chat selector. Test each profile with a real text response;
+being able to list a model endpoint is not sufficient proof that inference is
+working.
+
 For a model process running on the host while using Docker, do not use
 `127.0.0.1` from inside the container. Use
 `http://host.docker.internal:11434/v1` (or the equivalent reachable host).

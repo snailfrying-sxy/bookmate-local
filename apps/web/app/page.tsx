@@ -778,10 +778,6 @@ export default function Home() {
         setModelProfiles(profiles);
         setReaderProfile(reader);
         setReaderDisplayName(reader.display_name);
-        setSelectedModelProfileId((current) => current
-          ?? profiles.find((profile: ModelProfile) => profile.is_default)?.id
-          ?? profiles[0]?.id
-          ?? null);
         setSetupStatus(
           settings.base_url && settings.model
             ? `已配置 ${settings.model}，建议先测试连接。`
@@ -806,7 +802,7 @@ export default function Home() {
       setSelectedModelProfileId((current) => {
         if (preferredId && profiles.some((profile) => profile.id === preferredId)) return preferredId;
         if (current && profiles.some((profile) => profile.id === current)) return current;
-        return profiles.find((profile) => profile.is_default)?.id ?? profiles[0]?.id ?? null;
+        return current ? profiles.find((profile) => profile.is_default)?.id ?? profiles[0]?.id ?? null : null;
       });
     } catch {
       setSetupStatus("无法读取本地模型配置，请确认本地 API 正在运行。");
@@ -917,6 +913,24 @@ export default function Home() {
       );
     } catch (error) {
       setSetupStatus(`连接失败：${error instanceof Error ? error.message : "未知错误"}`);
+    } finally {
+      setSetupPending(false);
+    }
+  }
+
+  async function testEnvironmentModel() {
+    setSetupPending(true);
+    setSetupStatus("正在测试后端环境默认模型……");
+    try {
+      const response = await fetch(`${API_BASE}/v1/settings/model/test`, { method: "POST" });
+      const result = await response.json();
+      setSetupStatus(
+        result.ok
+          ? `后端默认连接成功 · ${result.model} · ${result.latency_ms}ms · ${result.preview}`
+          : `后端默认连接失败 · ${result.message || "模型服务没有返回可读错误"}`,
+      );
+    } catch (error) {
+      setSetupStatus(`测试后端默认连接失败：${error instanceof Error ? error.message : "未知错误"}`);
     } finally {
       setSetupPending(false);
     }
@@ -1375,9 +1389,28 @@ export default function Home() {
               </div>
             </form>
 
+            <div className="environment-model-manager">
+              <div className="setup-section-title">
+                <span>02</span><div><h3>后端默认模型</h3><p>{modelSettings.source === "environment" ? "由部署环境 .env 提供；密钥只存在服务端进程中。" : "由后端本地设置提供；密钥不会回显到浏览器。"}</p></div>
+              </div>
+              <article className={!selectedModelProfileId ? "selected" : ""}>
+                <button className="model-profile-select" onClick={() => setSelectedModelProfileId(null)} type="button">
+                  <span className="model-profile-mark">ENV</span>
+                  <span>
+                    <strong>{modelSettings.model || "尚未配置后端模型"}</strong>
+                    <small>{modelSettings.protocol === "chat_completions" ? "OpenAI 兼容" : "Responses"} · {modelSettings.base_url || "缺少 Base URL"}</small>
+                  </span>
+                </button>
+                <div className="model-profile-actions">
+                  {!selectedModelProfileId && <span>本轮使用</span>}
+                  <button disabled={setupPending || !modelSettings.base_url || !modelSettings.model} onClick={testEnvironmentModel} type="button">测试</button>
+                </div>
+              </article>
+            </div>
+
             <form className="model-form" onSubmit={saveModelProfile}>
               <div className="setup-section-title">
-                <span>02</span><div><h3>{editingModelProfileId ? "编辑模型配置" : "添加模型配置"}</h3><p>每项配置只在本机保存；可直接连接 OpenAI 协议兼容服务。</p></div>
+                <span>03</span><div><h3>{editingModelProfileId ? "编辑前端配置" : "添加前端配置"}</h3><p>每项配置只在本机保存；可直接连接 OpenAI 协议兼容服务。</p></div>
               </div>
               <label>
                 <span>配置名称</span>
@@ -1432,17 +1465,17 @@ export default function Home() {
 
             <div className="model-profile-manager">
               <div className="setup-section-title">
-                <span>03</span><div><h3>已保存的模型</h3><p>默认模型用于新对话；聊天中可随时切换已保存配置。</p></div>
+                <span>04</span><div><h3>前端模型配置档</h3><p>这些配置由当前用户在本机管理；聊天中可随时与后端默认连接切换。</p></div>
               </div>
               <div className="model-profile-list">
-                {modelProfiles.length === 0 && <p className="empty-library">还没有模型配置。添加一个 OpenAI 兼容模型后，聊天中可以随时选择；未配置时仍使用透明的演示回复。</p>}
+                {modelProfiles.length === 0 && <p className="empty-library">还没有前端模型配置档。后端默认连接仍可直接用于聊天；也可以添加一个可按轮切换的 OpenAI 兼容连接。</p>}
                 {modelProfiles.map((profile) => (
                   <article className={selectedModelProfileId === profile.id ? "selected" : ""} key={profile.id}>
                     <button className="model-profile-select" onClick={() => setSelectedModelProfileId(profile.id)} type="button">
                       <span className="model-profile-mark">AI</span>
                       <span>
                         <strong>{profile.name}</strong>
-                        <small>{profile.model} · {profile.protocol === "chat_completions" ? "OpenAI 兼容" : "Responses"}</small>
+                        <small>前端本机配置 · {profile.model} · {profile.protocol === "chat_completions" ? "OpenAI 兼容" : "Responses"}</small>
                       </span>
                     </button>
                     <div className="model-profile-actions">
@@ -1703,7 +1736,7 @@ export default function Home() {
                       </button>
                     ))}
                   </div>
-                  <label className="chat-model-selector"><span>模型</span><select aria-label="选择本轮聊天模型" onChange={(event) => setSelectedModelProfileId(event.target.value || null)} value={selectedModelProfileId ?? ""}><option value="">{modelSettings.model ? `默认 · ${modelSettings.model}` : "演示回复"}</option>{modelProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.name} · {profile.model}{profile.is_default ? "（默认）" : ""}</option>)}</select><button onClick={() => setShowPreferences(true)} type="button">管理</button></label>
+                  <label className="chat-model-selector"><span>模型</span><select aria-label="选择本轮聊天模型" onChange={(event) => setSelectedModelProfileId(event.target.value || null)} value={selectedModelProfileId ?? ""}><option value="">{modelSettings.model ? `后端默认 · ${modelSettings.model}` : "演示回复"}</option>{modelProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.name} · {profile.model}{profile.is_default ? "（前端默认）" : ""}</option>)}</select><button onClick={() => setShowPreferences(true)} type="button">管理</button></label>
                 </div>
                 <button disabled={!input.trim() || pending} type="submit">
                   {pending ? "正在回应" : "交给泊舟"}<b>↗</b>
@@ -1713,7 +1746,7 @@ export default function Home() {
             <p className="demo-disclaimer">
               {selectedModelProfile
                 ? `本轮模型：${selectedModelProfile.name} · ${selectedModelProfile.model}`
-                : modelSettings.base_url && modelSettings.model ? `当前模型：${modelSettings.model}` : "演示模式 · 未配置模型"}
+                : modelSettings.base_url && modelSettings.model ? `后端默认：${modelSettings.model}` : "演示模式 · 未配置模型"}
               {" · "}{searchPolicyLabels[searchPolicy]} · 联网工具尚未启用
             </p>
             {composerNotice && <p className="composer-notice" aria-live="polite">{composerNotice}</p>}

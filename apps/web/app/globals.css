@@ -590,6 +590,7 @@ summary:focus-visible {
 
 .model-form,
 .model-profile-manager,
+.environment-model-manager,
 .reader-profile-form,
 .library-manager,
 .library-shelf-manager,
@@ -605,7 +606,8 @@ summary:focus-visible {
   gap: 9px;
 }
 
-.model-profile-list article {
+.model-profile-list article,
+.environment-model-manager article {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -615,7 +617,8 @@ summary:focus-visible {
   border-radius: 7px 17px 17px 17px;
 }
 
-.model-profile-list article.selected {
+.model-profile-list article.selected,
+.environment-model-manager article.selected {
   background: rgba(114, 128, 106, 0.12);
   border-color: rgba(114, 128, 106, 0.38);
 }

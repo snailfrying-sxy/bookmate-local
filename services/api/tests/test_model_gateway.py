@@ -1,5 +1,7 @@
 import asyncio
 
+import httpx
+
 from app import model_gateway
 from app.model_gateway import _endpoint, _extract_text
 from app.models import ModelProtocol, ModelSettings
@@ -84,3 +86,19 @@ def test_generate_text_uses_minimal_chat_completions_contract(monkeypatch: objec
         "messages": [{"role": "user", "content": "聊聊这本书"}],
         "stream": False,
     }
+
+
+def test_connection_test_reports_timeout_details(monkeypatch: object) -> None:
+    async def raise_timeout(*args: object, **kwargs: object) -> tuple[str, str]:
+        raise httpx.ReadTimeout("timed out")
+
+    monkeypatch.setattr(
+        model_gateway,
+        "get_model_settings",
+        lambda include_key=False: ModelSettings(model="slow-model", timeout_seconds=90),
+    )
+    monkeypatch.setattr(model_gateway, "generate_text", raise_timeout)
+
+    result = asyncio.run(model_gateway.test_model_connection())
+    assert result.ok is False
+    assert result.message == "Connection timed out after 90s"

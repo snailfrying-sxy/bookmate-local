@@ -291,11 +291,16 @@ async def test_model_connection(profile_id: str | None = None) -> ModelTestRespo
             latency_ms=round((time.perf_counter() - started) * 1000),
             preview=text.strip()[:120],
         )
+    except httpx.TimeoutException:
+        message = f"Connection timed out after {settings.timeout_seconds}s"
+    except httpx.HTTPStatusError as error:
+        message = f"Model service returned HTTP {error.response.status_code}"
     except Exception as error:
-        return ModelTestResponse(
-            ok=False,
-            message=str(error)[:500],
-            model=settings.model or None,
-            latency_ms=round((time.perf_counter() - started) * 1000),
-            preview=None,
-        )
+        message = str(error) or error.__class__.__name__
+    return ModelTestResponse(
+        ok=False,
+        message=message[:500],
+        model=settings.model or None,
+        latency_ms=round((time.perf_counter() - started) * 1000),
+        preview=None,
+    )
