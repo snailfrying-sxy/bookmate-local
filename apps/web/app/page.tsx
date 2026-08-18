@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { DragEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type Direction = "follow" | "challenge" | "life";
 type Lane = "continue" | "counterpoint" | "crossover";
@@ -1247,7 +1247,14 @@ export default function Home() {
                   <div><p className="overline">File import</p><h3>把版本或资料放进书房</h3></div>
                   <label className="import-target"><span>归属书房</span><select onChange={(event) => setImportTargetBookId(event.target.value || null)} value={importTargetBookId ?? ""}><option value="">暂不归档</option>{libraryBooks.map((book) => <option key={book.id} value={book.id}>《{book.title}》</option>)}</select></label>
                 </div>
-                <label className="import-dropzone">
+                <label
+                  className="import-dropzone"
+                  onDragOver={(event: DragEvent<HTMLLabelElement>) => event.preventDefault()}
+                  onDrop={(event: DragEvent<HTMLLabelElement>) => {
+                    event.preventDefault();
+                    uploadDocument(event.dataTransfer.files?.[0], importTargetBookId);
+                  }}
+                >
                   <input
                     accept=".txt,.md,.pdf,.epub"
                     disabled={setupPending}
