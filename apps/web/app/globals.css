@@ -163,6 +163,39 @@ summary:focus-visible {
   gap: 10px;
 }
 
+.language-switch {
+  display: flex;
+  flex: 0 0 auto;
+  padding: 3px;
+  background: rgba(251, 247, 237, 0.58);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.language-switch button {
+  min-width: 30px;
+  padding: 6px 8px;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.language-switch button.active {
+  color: var(--paper-light);
+  background: var(--ink);
+}
+
+.language-switch button:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 2px;
+}
+
 .status {
   display: flex;
   align-items: center;
@@ -1324,7 +1357,7 @@ summary:focus-visible {
 }
 
 .search-policy select {
-  max-width: 150px;
+  max-width: 175px;
   padding: 4px 8px;
   color: var(--ink);
   background: var(--paper-light);
@@ -1610,7 +1643,7 @@ summary:focus-visible {
   letter-spacing: 0.08em;
 }
 
-.preferences-entry > span:last-child {
+.preferences-entry > span:nth-child(2) {
   display: flex;
   min-width: 0;
   flex-direction: column;
@@ -2089,6 +2122,10 @@ summary:focus-visible {
 .composer-footer button b {
   color: #e4b07a;
   font-size: 14px;
+}
+
+.submit-label-short {
+  display: none;
 }
 
 .demo-disclaimer {
@@ -2614,7 +2651,9 @@ summary:focus-visible {
   }
 
   .topbar-actions {
-    display: none;
+    display: flex;
+    flex: 0 0 auto;
+    margin-right: 12px;
   }
 
   .search-policy {
@@ -2848,6 +2887,14 @@ summary:focus-visible {
 
   .composer-footer > button[type="submit"] {
     margin-left: auto;
+  }
+
+  .submit-label-full {
+    display: none;
+  }
+
+  .submit-label-short {
+    display: inline;
   }
 
   .recommendation-panel {
