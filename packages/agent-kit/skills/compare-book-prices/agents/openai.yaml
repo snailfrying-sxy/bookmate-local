@@ -1,0 +1,4 @@
+interface:
+  display_name: "Compare Book Prices"
+  short_description: "按具体版本、地区、币种、运费税费和时效标准化比较图书购买报价"
+  default_prompt: "Use $compare-book-prices to compare current offers for this exact book edition and explain coverage limits."

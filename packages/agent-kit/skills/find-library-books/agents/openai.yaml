@@ -1,0 +1,4 @@
+interface:
+  display_name: "Find Library Books"
+  short_description: "按版本和位置查找附近图书馆并核验馆藏、可借、预约及数据时效"
+  default_prompt: "Use $find-library-books to find nearby libraries that hold this book and verify current availability."

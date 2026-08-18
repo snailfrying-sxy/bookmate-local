@@ -1,0 +1,7 @@
+apps/web/node_modules
+apps/web/.next
+services/api/.bookmate-data
+services/api/.pytest_cache
+**/__pycache__
+data
+.git

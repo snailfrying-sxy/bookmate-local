@@ -1,0 +1,17 @@
+services:
+  bookmate:
+    build:
+      context: .
+    environment:
+      BOOKMATE_DATA_DIR: /data
+      BOOKMATE_MAX_UPLOAD_MB: ${BOOKMATE_MAX_UPLOAD_MB:-50}
+      BOOKMATE_MODEL_PROTOCOL: ${BOOKMATE_MODEL_PROTOCOL:-}
+      BOOKMATE_MODEL_BASE_URL: ${BOOKMATE_MODEL_BASE_URL:-}
+      BOOKMATE_MODEL_NAME: ${BOOKMATE_MODEL_NAME:-}
+      BOOKMATE_MODEL_API_KEY: ${BOOKMATE_MODEL_API_KEY:-}
+    volumes:
+      - ./data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:8000:8000"

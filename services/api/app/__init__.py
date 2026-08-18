@@ -1,0 +1,2 @@
+"""BookMate API package."""
+
