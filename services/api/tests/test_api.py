@@ -22,6 +22,19 @@ def test_health() -> None:
     assert response.json() == {"status": "ok", "mode": "demo"}
 
 
+def test_local_development_cors_allows_loopback_preview() -> None:
+    response = request(
+        "OPTIONS",
+        "/v1/library/books",
+        headers={
+            "Origin": "http://127.0.0.1:3000",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://127.0.0.1:3000"
+
+
 def test_demo_session_has_transparent_companion_identity() -> None:
     response = request("GET", "/v1/demo/session")
     assert response.status_code == 200

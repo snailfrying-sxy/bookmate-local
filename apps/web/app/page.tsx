@@ -130,7 +130,11 @@ type LocalMemory = {
   created_at: string;
 };
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000").replace(/\/$/, "");
+// The packaged app is served by FastAPI, so use the current origin and avoid
+// treating localhost and 127.0.0.1 as different browser origins.
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL
+  ?? (typeof window !== "undefined" && window.location.port === "8000" ? "" : "http://localhost:8000")
+).replace(/\/$/, "");
 
 const directionOptions: Array<{ id: Direction; label: string; note: string }> = [
   { id: "follow", label: "顺着聊", note: "先把这个想法说清" },
