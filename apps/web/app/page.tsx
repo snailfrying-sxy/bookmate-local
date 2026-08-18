@@ -149,8 +149,8 @@ const laneLabels: Record<Lane, string> = {
 };
 
 const welcomeByMode: Record<CompanionMode, string> = {
-  general_companion: "今天不必从某一本书开始。最近有什么念头，值得找一个认真而不急着同意你的书友聊聊？",
-  book_room: "我们不急着概括《局外人》。读完以后，哪一点还留在你心里，甚至让你有些不同意别人通常的解释？",
+  general_companion: "不必先选一本书。最近有没有一个念头，总在心里回来？你可以从它开始，我会先听你把话说完。",
+  book_room: "先不急着谈《局外人》讲了什么。合上书以后，哪一个念头还没有离开你？",
 };
 
 const searchPolicyLabels: Record<SearchPolicy, string> = {
@@ -270,7 +270,7 @@ export default function Home() {
     {
       id: "welcome",
       role: "companion",
-      text: "我们不急着概括《局外人》。读完以后，哪一点还留在你心里，甚至让你有些不同意别人通常的解释？",
+      text: "先不急着谈《局外人》讲了什么。合上书以后，哪一个念头还没有离开你？",
       move: "邀请",
     },
   ]);
@@ -390,7 +390,7 @@ export default function Home() {
         id: `welcome-${nextMode}`,
         role: "companion",
         text: nextMode === "book_room" && localTitle
-          ? `我已经读入你的《${localTitle}》。不必从概括开始；哪一句、哪个判断，或哪种感受还留在你心里？`
+          ? `关于《${localTitle}》，不必从概括开始。把那句还留在心里的话告诉我；我们从那里继续。`
           : welcomeByMode[nextMode],
         move: "邀请",
       },
@@ -1114,7 +1114,7 @@ export default function Home() {
           <span className="brand-mark">泊</span>
           <div>
             <p className="brand-name">泊舟</p>
-            <p className="brand-subtitle">你的个人 AI 书友</p>
+            <p className="brand-subtitle">与你把书谈深的 AI 书友</p>
           </div>
         </div>
         <div className="topbar-actions">
@@ -1608,26 +1608,26 @@ export default function Home() {
             <div className="portrait">舟</div>
             <span className="ai-label">AI</span>
           </div>
-          <p className="overline">你的书友</p>
+          <p className="overline">由你的阅读，慢慢认识你</p>
           <h1>泊舟</h1>
           <p className="identity-copy">
-            我会先认真听懂你，再一起把一个问题往深处推半步。
+            书合上以后，问题还在。我会带着你愿意留下的线索，陪你把那句没说完的话继续说下去。
           </p>
 
           <div className="temperament">
-            <span>安静</span><span>诚恳</span><span>不急于结论</span>
+            <span>先听你说完</span><span>不只会赞同</span><span>记得未完的问题</span>
           </div>
 
           <div className="thread-card">
-            <p className="overline">我们正在想</p>
-            <blockquote>拒绝社会期待的表演，是否就等于冷漠？</blockquote>
+            <p className="overline">泊舟相信</p>
+            <blockquote>共频，不是拥有相同的答案，而是愿意沿着彼此的思路，再往深处走一点。</blockquote>
             <div className="thread-line"><i /></div>
-            <small>这是一段演示线索，不会写入真实记忆。</small>
+            <small>你的书、感受与确认过的记忆，让每次重逢都能从上次停下的地方继续。</small>
           </div>
 
           <div className="boundary-note">
-            <span>身份边界</span>
-            <p>泊舟不会冒充真人、虚构经历，或靠迎合让你留下。</p>
+            <span>始终坦诚</span>
+            <p>泊舟是一位 AI 书友，不冒充真人，不虚构经历、引文或理解。</p>
           </div>
           <button className="preferences-entry" onClick={() => setShowPreferences(true)} type="button">
             <span className="preferences-entry-mark">SET</span>

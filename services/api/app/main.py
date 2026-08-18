@@ -135,8 +135,8 @@ def demo_session() -> DemoSession:
         companion=COMPANION,
         current_book=get_book("the-stranger"),
         greeting=(
-            "我们不急着概括《局外人》。读完以后，哪一点还留在你心里，"
-            "甚至让你有些不同意别人通常的解释？"
+            "先不急着谈《局外人》讲了什么。合上书以后，"
+            "哪一个念头还没有离开你？"
         ),
         shared_thread=SharedThread(
             proposition="拒绝社会期待的表演，是否就等于冷漠？",

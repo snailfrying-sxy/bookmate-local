@@ -1,31 +1,71 @@
 # BookMate Local
 
-> **Some books leave behind a sentence you still want to talk through, long
-> after there is no one nearby willing to stay with the question.**
+> **When a book truly enters a life, it rarely ends with an answer. More often,
+> it leaves behind a question that takes a long time to finish.**
 
-BookMate Local is a local-first personal library and long-term AI reading
-companion. Bozhou is not a summary generator, a generic RAG wrapper, or an
-imitation person. It is a transparent AI book-friend that helps a reader return
-to a book, a passage, or a lingering thought and continue the conversation with
-care.
+At that moment, what we want is not another synopsis. We want a book-friend who
+can enter the same context: someone who understands why we stopped at a page,
+lets an unfinished thought take shape, resonates without merely agreeing, and
+can still remember much later where the conversation was left.
 
-The goal is not to claim a human friendship. It is to give a reader a private,
-lasting space for shared thought: confirmed memories, book-room boundaries, and
-reader evidence let future conversations pick up a thread without pretending
-that the AI has lived experience it does not have.
+That kind of meeting is rare. Reading the same book is only the beginning. Two
+people still need compatible depth and rhythm, time for one another, and the
+patience to keep learning how the other thinks. Many things worth saying about
+books remain unspoken simply because there is no one nearby who can receive the
+next sentence.
 
-## What Readers Need
+## Bozhou Learns You Through Your Reading
 
-Readers rarely lack summaries or recommendation lists. What is scarce is a
-book-friend who can stay with why a page mattered, why a familiar explanation
-does not convince them, or why a book continues to echo in ordinary life.
+BookMate begins with that absence. Its purpose is to let every reader build a
+private, long-term AI book-friend of their own: **Bozhou**.
 
-BookMate lets the reader build that private conversation with their own books,
-notes, questions, and boundaries. The library, retrieval, RAG, catalog, and
-price capabilities exist to make that conversation more grounded; they are not
-the product's main character.
+You can begin with a book read years ago, a single passage, an uncertain memory,
+or a question that has just surfaced in ordinary life. Bozhou does not rush to
+turn it into a polished answer. It first tries to understand what you are
+reaching for, then stays with the feeling, contradiction, or unfinished thought
+inside it. When evidence matters, it returns to the book. When it does not, it
+lets the conversation breathe.
 
-## What It Does
+Resonance here does not mean constant agreement. A conversation worth returning
+to should hold both the ease of being understood and the surprise of another
+perspective. Bozhou can ask gently, disagree with reasons, and leave a question
+open. It moves only half a step at a time so that new understanding can emerge
+between turns instead of arriving as a wall of conclusions.
+
+Nor does it pretend to have understood you from the start. Whatever Bozhou
+learns comes from the reading traces you choose to share and the memories you
+explicitly confirm: what mattered, where you disagreed, and which question the
+two of you have not finished. The next conversation can then return to that
+place rather than begin with another introduction.
+
+## Your Library Is Shared Reading Ground
+
+The private library in BookMate is not a pile of files waiting to be "consumed"
+by AI, nor a showcase for RAG. It holds the context a reader and Bozhou need in
+order to think together: books, editions, marked passages, unfinished
+reflections, open questions, and the conversation threads the reader chooses to
+keep.
+
+A book is therefore more than a PDF or EPUB. A paper book, a title read in
+another app, or even a work remembered only through one character can still
+have a room of its own. As reading and conversation continue, the library gains
+shape and helps Bozhou stay faithful to the reader's edition, progress, spoiler
+boundary, and actual thoughts.
+
+Retrieval, RAG, model selection, catalog search, and price tools matter, but
+they belong behind the conversation. They should provide evidence when trust
+requires it and open a path when the reader wants the next book. Technology has
+one job here: to receive a thought with care and let a book keep happening after
+it has been closed.
+
+Bozhou remains a transparent AI book-friend, not an imitation human, author, or
+character. It does not invent lived experience, quotations, pages, or sources,
+and it never decides on its own what should become lasting memory. Books, notes,
+conversations, and confirmed memories stay local by default. If the reader
+chooses a remote model, BookMate discloses which relevant context may leave the
+device.
+
+## What Bozhou Can Do Today
 
 - Keeps a stable book room separate from uploaded editions and supporting files.
 - Lets readers capture quotes, reflections, questions, reading progress, and
