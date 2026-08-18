@@ -108,16 +108,18 @@ Open `http://localhost:8000`.
 
 ## Configure Models
 
-Open **Preferences & model settings** at the lower left, then use **Add model
-configuration**:
+Open **Preferences & models** at the lower left. The interface presents every
+available connection as one list of **book-friend models**: chat only shows the
+readable name you choose, never its deployment layer, protocol, or server
+address. Use **Add model** when you want another option:
 
-1. Give the configuration a recognizable name, such as `Daily conversation` or
-   `Local Ollama`.
+1. Give it a recognizable chat name, such as `Deep conversation` or
+   `A quiet local model`.
 2. Select the API shape. **Chat Completions compatible** is the usual choice
    for OpenAI-compatible providers.
 3. Enter the provider Base URL (normally including `/v1`), the exact model ID,
    and an optional API key.
-4. Save it locally and use **Test** to verify the connection.
+4. Save it and use **Try it** to verify the connection.
 5. Choose a default for new chats, or select any saved profile from the compact
    **This turn's model** control above the message composer.
 
@@ -130,13 +132,11 @@ interface. It does not become companion memory and is not automatically sent
 to a model provider. Books, documents, and reading traces remain in the
 separate **Local Library** area in the upper-right corner.
 
-The settings screen separates two usable connection layers: the **Backend
-default model** comes from deployment environment settings and keeps provider
-keys in the server process; **local model profiles** are user-managed
-connections for Ollama, LAN, or other OpenAI-compatible services. Both are
-visible in the chat selector. Test each profile with a real text response;
-being able to list a model endpoint is not sufficient proof that inference is
-working.
+Behind the scenes, the packaged default model comes from deployment settings
+while saved model profiles are user-managed connections for Ollama, LAN, or
+other compatible services. Both appear together in the same chat selector.
+Test each model with a real text response; being able to list a model endpoint
+is not sufficient proof that inference is working.
 
 For a model process running on the host while using Docker, do not use
 `127.0.0.1` from inside the container. Use
