@@ -27,7 +27,16 @@ from .library import (
     search_reading_notes,
     update_book,
 )
-from .model_gateway import get_model_settings, test_model_connection, update_model_settings
+from .model_gateway import (
+    create_model_profile,
+    delete_model_profile,
+    get_model_profile,
+    get_model_settings,
+    list_model_profiles,
+    test_model_connection,
+    update_model_profile,
+    update_model_settings,
+)
 from .relationship import (
     confirm_memory,
     delete_conversation,
@@ -41,6 +50,7 @@ from .relationship import (
     record_chat,
     relevant_memories,
 )
+from .reader_profile import get_reader_profile, update_reader_profile
 from .models import (
     ChatRequest,
     ChatResponse,
@@ -63,11 +73,16 @@ from .models import (
     MemoryStatus,
     ModelSettings,
     ModelSettingsPatch,
+    ModelProfile,
+    ModelProfileCreate,
+    ModelProfilePatch,
     ModelTestResponse,
     RecommendationRequest,
     RecommendationResponse,
     ReadingNote,
     ReadingNoteCreate,
+    ReaderProfile,
+    ReaderProfilePatch,
     SharedThread,
     SearchPolicy,
 )
@@ -174,9 +189,59 @@ def patch_model_settings(patch: ModelSettingsPatch) -> ModelSettings:
         raise HTTPException(status_code=422, detail=str(error)) from error
 
 
+@app.get("/v1/settings/reader", response_model=ReaderProfile)
+def reader_profile() -> ReaderProfile:
+    return get_reader_profile()
+
+
+@app.patch("/v1/settings/reader", response_model=ReaderProfile)
+def patch_reader_profile(patch: ReaderProfilePatch) -> ReaderProfile:
+    return update_reader_profile(patch)
+
+
+@app.get("/v1/settings/models", response_model=list[ModelProfile])
+def model_profiles() -> list[ModelProfile]:
+    return list_model_profiles()
+
+
+@app.post("/v1/settings/models", response_model=ModelProfile, status_code=status.HTTP_201_CREATED)
+def create_model_profile_endpoint(payload: ModelProfileCreate) -> ModelProfile:
+    try:
+        return create_model_profile(payload)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@app.patch("/v1/settings/models/{profile_id}", response_model=ModelProfile)
+def patch_model_profile(profile_id: str, payload: ModelProfilePatch) -> ModelProfile:
+    try:
+        return update_model_profile(profile_id, payload)
+    except KeyError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@app.delete("/v1/settings/models/{profile_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_model_profile(profile_id: str) -> Response:
+    try:
+        delete_model_profile(profile_id)
+    except KeyError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @app.post("/v1/settings/model/test", response_model=ModelTestResponse)
 async def model_connection_test() -> ModelTestResponse:
     return await test_model_connection()
+
+
+@app.post("/v1/settings/models/{profile_id}/test", response_model=ModelTestResponse)
+async def model_profile_connection_test(profile_id: str) -> ModelTestResponse:
+    try:
+        return await test_model_connection(profile_id)
+    except KeyError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
 
 
 @app.get("/v1/knowledge/documents", response_model=list[KnowledgeDocument])
@@ -344,7 +409,11 @@ async def chat(request: ChatRequest) -> ChatResponse:
         current_conversation = ensure_conversation(request)
         history = recent_messages(current_conversation.id)
         memories_for_context = relevant_memories(current_conversation.id, request)
-        settings = get_model_settings()
+        settings = (
+            get_model_profile(request.model_profile_id, include_key=True)
+            if request.model_profile_id
+            else get_model_settings(include_key=True)
+        )
         if settings.base_url and settings.model:
             passages = (
                 search_chunks(request.message, request.knowledge_document_id, limit=4)
@@ -356,7 +425,9 @@ async def chat(request: ChatRequest) -> ChatResponse:
                 if request.library_book_id
                 else []
             )
-            response = await respond_with_model(request, passages, notes, history, memories_for_context)
+            response = await respond_with_model(
+                request, passages, notes, history, memories_for_context, settings
+            )
         else:
             response = respond(request)
         return record_chat(current_conversation.id, request, response)

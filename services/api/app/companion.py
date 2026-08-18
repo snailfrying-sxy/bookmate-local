@@ -18,6 +18,7 @@ from .models import (
     RecommendationRequest,
     RecommendationResponse,
     Memory,
+    ModelConnection,
     ReadingNote,
     SearchAction,
     SearchDecision,
@@ -207,6 +208,7 @@ async def respond_with_model(
     notes: list[ReadingNote],
     history: list[dict[str, str]],
     memories: list[Memory],
+    model_settings: ModelConnection,
 ) -> ChatResponse:
     library_book = get_library_book(request.library_book_id) if request.library_book_id else None
     # A selected personal shelf item is the authoritative room identity. ChatRequest
@@ -298,7 +300,8 @@ async def respond_with_model(
             {"role": "system", "content": system_prompt},
             *history,
             {"role": "user", "content": request.message},
-        ]
+        ],
+        model_settings,
     )
     structured = _json_object(raw_text)
     if structured:

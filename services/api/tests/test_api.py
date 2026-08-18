@@ -2,7 +2,9 @@ import asyncio
 
 import httpx
 
+from app import main as main_module
 from app.main import app
+from app.models import ModelProtocol, ModelSettings
 
 
 def request(method: str, path: str, **kwargs: object) -> httpx.Response:
@@ -197,6 +199,98 @@ def test_local_model_settings_are_configurable_and_secret_is_redacted() -> None:
             json={"base_url": "", "model": "", "clear_api_key": True},
         )
         assert cleared.status_code == 200
+
+
+def test_reader_profile_is_a_local_interface_preference() -> None:
+    try:
+        updated = request("PATCH", "/v1/settings/reader", json={"display_name": "小舟"})
+        assert updated.status_code == 200
+        assert updated.json() == {"display_name": "小舟"}
+
+        fetched = request("GET", "/v1/settings/reader")
+        assert fetched.status_code == 200
+        assert fetched.json() == {"display_name": "小舟"}
+    finally:
+        cleared = request("PATCH", "/v1/settings/reader", json={"display_name": ""})
+        assert cleared.status_code == 200
+
+
+def test_model_profiles_are_local_redacted_and_selectable() -> None:
+    created = request(
+        "POST",
+        "/v1/settings/models",
+        json={
+            "name": "OpenAI compatible test",
+            "protocol": "chat_completions",
+            "base_url": "http://127.0.0.1:11434/v1",
+            "model": "local-bookmate-test",
+            "api_key": "profile-secret",
+            "set_as_default": True,
+        },
+    )
+    assert created.status_code == 201
+    profile = created.json()
+    profile_id = profile["id"]
+    assert profile["is_default"] is True
+    assert profile["api_key_configured"] is True
+    assert "api_key" not in profile
+
+    try:
+        listed = request("GET", "/v1/settings/models")
+        assert listed.status_code == 200
+        assert any(item["id"] == profile_id and item["is_default"] for item in listed.json())
+
+        updated = request(
+            "PATCH",
+            f"/v1/settings/models/{profile_id}",
+            json={"name": "OpenAI compatible revised", "model": "local-bookmate-revised"},
+        )
+        assert updated.status_code == 200
+        assert updated.json()["model"] == "local-bookmate-revised"
+        assert "api_key" not in updated.json()
+    finally:
+        deleted = request("DELETE", f"/v1/settings/models/{profile_id}")
+        assert deleted.status_code == 204
+
+
+def test_chat_uses_the_selected_model_profile(monkeypatch: object) -> None:
+    selected: dict[str, object] = {}
+
+    def fake_profile(profile_id: str, include_key: bool = False) -> ModelSettings:
+        selected["id"] = profile_id
+        selected["include_key"] = include_key
+        return ModelSettings(
+            protocol=ModelProtocol.CHAT_COMPLETIONS,
+            base_url="http://model.local/v1",
+            model="selected-model",
+            api_key_configured=False,
+            timeout_seconds=60,
+            source="local",
+        )
+
+    async def fake_response(*args: object) -> object:
+        return main_module.respond(args[0])
+
+    monkeypatch.setattr(main_module, "get_model_profile", fake_profile)
+    monkeypatch.setattr(main_module, "respond_with_model", fake_response)
+
+    created = request(
+        "POST",
+        "/v1/chat",
+        json={
+            "message": "Use the selected profile for this conversation.",
+            "mode": "book_room",
+            "book_id": "the-stranger",
+            "model_profile_id": "model-selected-for-test",
+        },
+    )
+    assert created.status_code == 200
+    assert selected == {"id": "model-selected-for-test", "include_key": True}
+
+    conversation_id = created.json()["conversation_id"]
+    assert conversation_id
+    deleted = request("DELETE", f"/v1/conversations/{conversation_id}")
+    assert deleted.status_code == 204
 
 
 def test_local_text_document_can_be_uploaded_searched_and_deleted() -> None:
@@ -395,7 +489,7 @@ def test_book_room_can_start_from_reader_notes_without_an_uploaded_ebook(monkeyp
 
     captured: list[dict[str, str]] = []
 
-    async def fake_generate(messages: list[dict[str, str]]) -> tuple[str, str]:
+    async def fake_generate(messages: list[dict[str, str]], *_: object) -> tuple[str, str]:
         captured.extend(messages)
         return (
             '{"reply":"你先抓住的不是结论，而是那种不肯轻易原谅的张力。",'

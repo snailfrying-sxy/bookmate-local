@@ -128,7 +128,7 @@ class CompanionStatePatch(BaseModel):
     search_policy: SearchPolicy | None = None
 
 
-class ModelSettings(BaseModel):
+class ModelConnection(BaseModel):
     protocol: ModelProtocol = ModelProtocol.CHAT_COMPLETIONS
     base_url: str = ""
     model: str = ""
@@ -136,6 +136,10 @@ class ModelSettings(BaseModel):
     api_key: str | None = Field(default=None, exclude=True)
     timeout_seconds: int = 60
     source: str = "default"
+
+
+class ModelSettings(ModelConnection):
+    pass
 
 
 class ModelSettingsPatch(BaseModel):
@@ -147,12 +151,51 @@ class ModelSettingsPatch(BaseModel):
     timeout_seconds: int | None = Field(default=None, ge=5, le=300)
 
 
+class ModelProfile(ModelConnection):
+    id: str
+    name: str
+    is_default: bool = False
+    created_at: datetime
+    updated_at: datetime
+
+
+class ModelProfileCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    protocol: ModelProtocol = ModelProtocol.CHAT_COMPLETIONS
+    base_url: str = Field(min_length=1, max_length=500)
+    model: str = Field(min_length=1, max_length=200)
+    api_key: str | None = Field(default=None, max_length=1000)
+    timeout_seconds: int = Field(default=60, ge=5, le=300)
+    set_as_default: bool = True
+
+
+class ModelProfilePatch(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=80)
+    protocol: ModelProtocol | None = None
+    base_url: str | None = Field(default=None, min_length=1, max_length=500)
+    model: str | None = Field(default=None, min_length=1, max_length=200)
+    api_key: str | None = Field(default=None, max_length=1000)
+    clear_api_key: bool = False
+    timeout_seconds: int | None = Field(default=None, ge=5, le=300)
+    set_as_default: bool | None = None
+
+
 class ModelTestResponse(BaseModel):
     ok: bool
     message: str
     model: str | None
     latency_ms: int
     preview: str | None
+
+
+class ReaderProfile(BaseModel):
+    """Local interface preferences, deliberately separate from companion memories."""
+
+    display_name: str = ""
+
+
+class ReaderProfilePatch(BaseModel):
+    display_name: str = Field(default="", max_length=80)
 
 
 class KnowledgeDocument(BaseModel):
@@ -281,6 +324,7 @@ class ChatRequest(BaseModel):
     knowledge_document_id: str | None = None
     library_book_id: str | None = None
     conversation_id: str | None = None
+    model_profile_id: str | None = None
 
 
 class ChatResponse(BaseModel):

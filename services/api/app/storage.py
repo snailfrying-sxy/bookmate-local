@@ -21,6 +21,21 @@ def initialize_storage() -> None:
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
 
+            CREATE TABLE IF NOT EXISTS model_profiles (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                protocol TEXT NOT NULL,
+                base_url TEXT NOT NULL,
+                model TEXT NOT NULL,
+                api_key TEXT,
+                timeout_seconds INTEGER NOT NULL DEFAULT 60,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_model_profiles_name
+                ON model_profiles(name COLLATE NOCASE);
+
             CREATE TABLE IF NOT EXISTS library_books (
                 id TEXT PRIMARY KEY,
                 title TEXT NOT NULL,

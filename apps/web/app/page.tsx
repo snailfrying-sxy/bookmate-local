@@ -45,6 +45,24 @@ type ModelSettings = {
   source: string;
 };
 
+type ModelProfile = {
+  id: string;
+  name: string;
+  protocol: ModelProtocol;
+  base_url: string;
+  model: string;
+  api_key_configured: boolean;
+  timeout_seconds: number;
+  source: string;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+type ReaderProfile = {
+  display_name: string;
+};
+
 type KnowledgeDocument = {
   id: string;
   book_id: string | null;
@@ -261,6 +279,7 @@ export default function Home() {
   const [feedbackByMessage, setFeedbackByMessage] = useState<Record<string, MessageFeedback>>({});
   const [composerNotice, setComposerNotice] = useState("");
   const [showLocalSetup, setShowLocalSetup] = useState(false);
+  const [showPreferences, setShowPreferences] = useState(false);
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
   const [libraryBooks, setLibraryBooks] = useState<LibraryBook[]>([]);
   const [readingNotes, setReadingNotes] = useState<ReadingNote[]>([]);
@@ -277,6 +296,12 @@ export default function Home() {
     timeout_seconds: 60,
     source: "default",
   });
+  const [modelProfiles, setModelProfiles] = useState<ModelProfile[]>([]);
+  const [readerProfile, setReaderProfile] = useState<ReaderProfile>({ display_name: "" });
+  const [readerDisplayName, setReaderDisplayName] = useState("");
+  const [selectedModelProfileId, setSelectedModelProfileId] = useState<string | null>(null);
+  const [modelProfileName, setModelProfileName] = useState("");
+  const [editingModelProfileId, setEditingModelProfileId] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState("");
   const [setupStatus, setSetupStatus] = useState("尚未配置模型时，将使用确定性演示回复。");
   const [setupPending, setSetupPending] = useState(false);
@@ -300,6 +325,10 @@ export default function Home() {
   const selectedLibraryBook = useMemo(
     () => libraryBooks.find((book) => book.id === selectedLibraryBookId) ?? null,
     [libraryBooks, selectedLibraryBookId],
+  );
+  const selectedModelProfile = useMemo(
+    () => modelProfiles.find((profile) => profile.id === selectedModelProfileId) ?? null,
+    [modelProfiles, selectedModelProfileId],
   );
   const displayedRecommendations = showAlternativeRecommendations
     ? alternativeRecommendations
@@ -711,18 +740,29 @@ export default function Home() {
     let active = true;
     async function loadLocalSetup() {
       try {
-        const [settingsResponse, documentsResponse] = await Promise.all([
+        const [settingsResponse, documentsResponse, profilesResponse, readerResponse] = await Promise.all([
           fetch(`${API_BASE}/v1/settings/model`),
           fetch(`${API_BASE}/v1/knowledge/documents`),
+          fetch(`${API_BASE}/v1/settings/models`),
+          fetch(`${API_BASE}/v1/settings/reader`),
         ]);
-        if (!settingsResponse.ok || !documentsResponse.ok) return;
-        const [settings, localDocuments] = await Promise.all([
+        if (!settingsResponse.ok || !documentsResponse.ok || !profilesResponse.ok || !readerResponse.ok) return;
+        const [settings, localDocuments, profiles, reader] = await Promise.all([
           settingsResponse.json(),
           documentsResponse.json(),
+          profilesResponse.json(),
+          readerResponse.json(),
         ]);
         if (!active) return;
         setModelSettings(settings);
         setDocuments(localDocuments);
+        setModelProfiles(profiles);
+        setReaderProfile(reader);
+        setReaderDisplayName(reader.display_name);
+        setSelectedModelProfileId((current) => current
+          ?? profiles.find((profile: ModelProfile) => profile.is_default)?.id
+          ?? profiles[0]?.id
+          ?? null);
         setSetupStatus(
           settings.base_url && settings.model
             ? `已配置 ${settings.model}，建议先测试连接。`
@@ -738,28 +778,77 @@ export default function Home() {
     };
   }, []);
 
-  async function saveModelSettings(event: FormEvent<HTMLFormElement>) {
+  async function refreshModelProfiles(preferredId?: string | null) {
+    try {
+      const response = await fetch(`${API_BASE}/v1/settings/models`);
+      if (!response.ok) return;
+      const profiles: ModelProfile[] = await response.json();
+      setModelProfiles(profiles);
+      setSelectedModelProfileId((current) => {
+        if (preferredId && profiles.some((profile) => profile.id === preferredId)) return preferredId;
+        if (current && profiles.some((profile) => profile.id === current)) return current;
+        return profiles.find((profile) => profile.is_default)?.id ?? profiles[0]?.id ?? null;
+      });
+    } catch {
+      setSetupStatus("无法读取本地模型配置，请确认本地 API 正在运行。");
+    }
+  }
+
+  async function saveReaderProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSetupPending(true);
-    setSetupStatus("正在保存本地模型设置……");
+    setSetupStatus("正在保存本地界面配置……");
     try {
-      const payload: Record<string, string | number> = {
+      const response = await fetch(`${API_BASE}/v1/settings/reader`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ display_name: readerDisplayName.trim() }),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      const profile: ReaderProfile = await response.json();
+      setReaderProfile(profile);
+      setReaderDisplayName(profile.display_name);
+      setSetupStatus(profile.display_name ? `已将本地界面称呼设为“${profile.display_name}”。` : "已恢复默认的界面称呼。");
+    } catch (error) {
+      setSetupStatus(`保存用户配置失败：${error instanceof Error ? error.message : "未知错误"}`);
+    } finally {
+      setSetupPending(false);
+    }
+  }
+
+  async function saveModelProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSetupPending(true);
+    setSetupStatus("正在保存本地模型配置……");
+    try {
+      const editingProfile = modelProfiles.find((profile) => profile.id === editingModelProfileId) ?? null;
+      const payload: Record<string, string | number | boolean | null> = {
+        name: modelProfileName.trim() || modelSettings.model.trim(),
         protocol: modelSettings.protocol,
         base_url: modelSettings.base_url,
         model: modelSettings.model,
         timeout_seconds: modelSettings.timeout_seconds,
       };
       if (apiKey.trim()) payload.api_key = apiKey.trim();
-      const response = await fetch(`${API_BASE}/v1/settings/model`, {
-        method: "PATCH",
+      if (!editingProfile) {
+        payload.api_key = apiKey.trim() || null;
+        payload.set_as_default = modelProfiles.length === 0;
+      }
+      const response = await fetch(
+        editingProfile ? `${API_BASE}/v1/settings/models/${editingProfile.id}` : `${API_BASE}/v1/settings/models`,
+        {
+        method: editingProfile ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      });
+        },
+      );
       if (!response.ok) throw new Error(await response.text());
-      const settings = await response.json();
-      setModelSettings(settings);
+      const profile: ModelProfile = await response.json();
       setApiKey("");
-      setSetupStatus("设置已保存在本机。现在可以测试模型连接。");
+      setModelProfileName("");
+      setEditingModelProfileId(null);
+      await refreshModelProfiles(profile.id);
+      setSetupStatus(`“${profile.name}”已保存在本机，并已选为当前对话模型。`);
     } catch (error) {
       setSetupStatus(`保存失败：${error instanceof Error ? error.message : "未知错误"}`);
     } finally {
@@ -767,11 +856,40 @@ export default function Home() {
     }
   }
 
-  async function testModel() {
+  function beginModelProfileEdit(profile: ModelProfile) {
+    setEditingModelProfileId(profile.id);
+    setModelProfileName(profile.name);
+    setModelSettings({
+      protocol: profile.protocol,
+      base_url: profile.base_url,
+      model: profile.model,
+      api_key_configured: profile.api_key_configured,
+      timeout_seconds: profile.timeout_seconds,
+      source: profile.source,
+    });
+    setApiKey("");
+    setSetupStatus(`正在编辑“${profile.name}”。若不输入 API Key，会保留原有密钥。`);
+  }
+
+  function cancelModelProfileEdit() {
+    setEditingModelProfileId(null);
+    setModelProfileName("");
+    setApiKey("");
+    setModelSettings({
+      protocol: "chat_completions",
+      base_url: "",
+      model: "",
+      api_key_configured: false,
+      timeout_seconds: 60,
+      source: "default",
+    });
+  }
+
+  async function testModelProfile(profile: ModelProfile) {
     setSetupPending(true);
-    setSetupStatus("正在发送最小连接测试……");
+    setSetupStatus(`正在测试“${profile.name}”的连接……`);
     try {
-      const response = await fetch(`${API_BASE}/v1/settings/model/test`, { method: "POST" });
+      const response = await fetch(`${API_BASE}/v1/settings/models/${profile.id}/test`, { method: "POST" });
       const result = await response.json();
       setSetupStatus(
         result.ok
@@ -780,6 +898,39 @@ export default function Home() {
       );
     } catch (error) {
       setSetupStatus(`连接失败：${error instanceof Error ? error.message : "未知错误"}`);
+    } finally {
+      setSetupPending(false);
+    }
+  }
+
+  async function setDefaultModelProfile(profile: ModelProfile) {
+    setSetupPending(true);
+    try {
+      const response = await fetch(`${API_BASE}/v1/settings/models/${profile.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ set_as_default: true }),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      await refreshModelProfiles(profile.id);
+      setSetupStatus(`“${profile.name}”已设为默认模型。`);
+    } catch (error) {
+      setSetupStatus(`更新默认模型失败：${error instanceof Error ? error.message : "未知错误"}`);
+    } finally {
+      setSetupPending(false);
+    }
+  }
+
+  async function removeModelProfile(profile: ModelProfile) {
+    if (!window.confirm(`删除“${profile.name}”的本地模型配置？这不会删除服务商账户或模型。`)) return;
+    setSetupPending(true);
+    try {
+      const response = await fetch(`${API_BASE}/v1/settings/models/${profile.id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error(await response.text());
+      await refreshModelProfiles();
+      setSetupStatus(`“${profile.name}”已从本机移除。`);
+    } catch (error) {
+      setSetupStatus(`移除模型配置失败：${error instanceof Error ? error.message : "未知错误"}`);
     } finally {
       setSetupPending(false);
     }
@@ -877,6 +1028,7 @@ export default function Home() {
           book_title: mode === "book_room" && !activeBookId ? activeBookTitle : null,
           knowledge_document_id: mode === "book_room" ? activeDocument?.id ?? null : null,
           library_book_id: mode === "book_room" ? selectedLibraryBookId : null,
+          model_profile_id: selectedModelProfileId,
           direction,
           search_policy: searchPolicy,
         }),
@@ -1034,31 +1186,57 @@ export default function Home() {
         </div>
       )}
 
-      {showLocalSetup && (
-        <div className="setup-backdrop" role="presentation" onMouseDown={() => setShowLocalSetup(false)}>
+      {showPreferences && (
+        <div className="setup-backdrop" role="presentation" onMouseDown={() => setShowPreferences(false)}>
           <section
-            aria-label="本地模型与知识库设置"
+            aria-label="偏好与模型设置"
             aria-modal="true"
-            className="setup-drawer"
+            className="preferences-drawer"
             onMouseDown={(event) => event.stopPropagation()}
             role="dialog"
           >
             <div className="setup-heading">
               <div>
-                <p className="overline">Local first</p>
-                <h2>把书友安在自己的电脑里</h2>
+                <p className="overline">Your space, your choice</p>
+                <h2>偏好与模型设置</h2>
               </div>
-              <button aria-label="关闭设置" onClick={() => setShowLocalSetup(false)} type="button">×</button>
+              <button aria-label="关闭偏好与模型设置" onClick={() => setShowPreferences(false)} type="button">×</button>
             </div>
 
             <p className="privacy-callout">
-              文件、索引和设置保存在本机。若使用远程模型，与问题相关的少量书籍片段会发送给你配置的模型服务。
+              这是应用设置，不与书架、阅读痕迹或书籍文件混在一起。模型密钥和个人称呼只保存在本机；使用远程模型时，相关片段会按需发送给该服务。
             </p>
 
-            <form className="model-form" onSubmit={saveModelSettings}>
+            <form className="reader-profile-form" onSubmit={saveReaderProfile}>
               <div className="setup-section-title">
-                <span>01</span><div><h3>模型连接</h3><p>使用最小 OpenAI 风格文本接口</p></div>
+                <span>01</span><div><h3>你的配置</h3><p>为本地界面设置一个称呼，不会改变泊舟的身份，也不会自动写入长期记忆。</p></div>
               </div>
+              <label>
+                <span>界面称呼</span>
+                <input
+                  maxLength={80}
+                  onChange={(event) => setReaderDisplayName(event.target.value)}
+                  placeholder="例如：小林"
+                  value={readerDisplayName}
+                />
+              </label>
+              <div className="setup-actions">
+                <button className="model-save" disabled={setupPending} type="submit">保存用户配置</button>
+              </div>
+            </form>
+
+            <form className="model-form" onSubmit={saveModelProfile}>
+              <div className="setup-section-title">
+                <span>02</span><div><h3>{editingModelProfileId ? "编辑模型配置" : "添加模型配置"}</h3><p>每项配置只在本机保存；可直接连接 OpenAI 协议兼容服务。</p></div>
+              </div>
+              <label>
+                <span>配置名称</span>
+                <input
+                  onChange={(event) => setModelProfileName(event.target.value)}
+                  placeholder="例如：日常深聊 / 本地 Ollama"
+                  value={modelProfileName}
+                />
+              </label>
               <label>
                 <span>接口模式</span>
                 <select
@@ -1097,16 +1275,66 @@ export default function Home() {
                 />
               </label>
               <div className="setup-actions">
-                <button disabled={setupPending} type="submit">保存到本机</button>
-                <button disabled={setupPending || !modelSettings.base_url || !modelSettings.model} onClick={testModel} type="button">
-                  测试连接
-                </button>
+                {editingModelProfileId && <button disabled={setupPending} onClick={cancelModelProfileEdit} type="button">取消编辑</button>}
+                <button className="model-save" disabled={setupPending || !modelSettings.base_url || !modelSettings.model} type="submit">{editingModelProfileId ? "更新模型配置" : "保存模型配置"}</button>
               </div>
             </form>
 
+            <div className="model-profile-manager">
+              <div className="setup-section-title">
+                <span>03</span><div><h3>已保存的模型</h3><p>默认模型用于新对话；聊天中可随时切换已保存配置。</p></div>
+              </div>
+              <div className="model-profile-list">
+                {modelProfiles.length === 0 && <p className="empty-library">还没有模型配置。添加一个 OpenAI 兼容模型后，聊天中可以随时选择；未配置时仍使用透明的演示回复。</p>}
+                {modelProfiles.map((profile) => (
+                  <article className={selectedModelProfileId === profile.id ? "selected" : ""} key={profile.id}>
+                    <button className="model-profile-select" onClick={() => setSelectedModelProfileId(profile.id)} type="button">
+                      <span className="model-profile-mark">AI</span>
+                      <span>
+                        <strong>{profile.name}</strong>
+                        <small>{profile.model} · {profile.protocol === "chat_completions" ? "OpenAI 兼容" : "Responses"}</small>
+                      </span>
+                    </button>
+                    <div className="model-profile-actions">
+                      <button disabled={setupPending} onClick={() => beginModelProfileEdit(profile)} type="button">编辑</button>
+                      {profile.is_default ? <span>默认</span> : <button disabled={setupPending} onClick={() => setDefaultModelProfile(profile)} type="button">设为默认</button>}
+                      <button disabled={setupPending} onClick={() => testModelProfile(profile)} type="button">测试</button>
+                      <button disabled={setupPending} onClick={() => removeModelProfile(profile)} type="button">删除</button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+
+            <p className="setup-status" aria-live="polite">{setupStatus}</p>
+          </section>
+        </div>
+      )}
+
+      {showLocalSetup && (
+        <div className="setup-backdrop" role="presentation" onMouseDown={() => setShowLocalSetup(false)}>
+          <section
+            aria-label="本地书库"
+            aria-modal="true"
+            className="setup-drawer"
+            onMouseDown={(event) => event.stopPropagation()}
+            role="dialog"
+          >
+            <div className="setup-heading">
+              <div>
+                <p className="overline">Your local library</p>
+                <h2>管理你的本地书库</h2>
+              </div>
+              <button aria-label="关闭本地书库" onClick={() => setShowLocalSetup(false)} type="button">×</button>
+            </div>
+
+            <p className="privacy-callout">
+              书籍、阅读痕迹、文件与索引都保存在本机。模型连接及个人界面配置在左下角的“偏好与模型设置”中单独管理。
+            </p>
+
             <div className="library-shelf-manager">
               <div className="setup-section-title">
-                <span>02</span><div><h3>我的书架</h3><p>作品独立于文件、笔记和对话存在</p></div>
+                <span>01</span><div><h3>我的书架</h3><p>作品独立于文件、笔记和对话存在</p></div>
               </div>
               <form className="library-book-form" onSubmit={createLibraryBook}>
                 <input
@@ -1151,7 +1379,7 @@ export default function Home() {
 
             <div className="book-room-manager">
               <div className="setup-section-title">
-                <span>03</span><div><h3>这本书，怎样陪你聊</h3><p>不上传全文，也可以先设定书房与剧透边界</p></div>
+                <span>02</span><div><h3>这本书，怎样陪你聊</h3><p>不上传全文，也可以先设定书房与剧透边界</p></div>
               </div>
               {!selectedLibraryBook && <p className="empty-library">先在书架中选择一本书。实体书、阅读 App 里的书和只有读后印象的书都可以。</p>}
               {selectedLibraryBook && (
@@ -1168,7 +1396,7 @@ export default function Home() {
 
             <div className="reading-capture-manager">
               <div className="setup-section-title">
-                <span>04</span><div><h3>随手留下阅读痕迹</h3><p>一段摘录、一句感想或一个问题，就足够开始</p></div>
+                <span>03</span><div><h3>随手留下阅读痕迹</h3><p>一段摘录、一句感想或一个问题，就足够开始</p></div>
               </div>
               {!selectedLibraryBook && <p className="empty-library">选择书架项目后，可以粘贴阅读 App 的划线，或记下实体书中让你停住的地方。</p>}
               {selectedLibraryBook && (
@@ -1198,7 +1426,7 @@ export default function Home() {
 
             <div className="library-manager">
               <div className="setup-section-title">
-                <span>05</span><div><h3>版本、笔记与本地资料</h3><p>TXT · Markdown · PDF · EPUB</p></div>
+                <span>04</span><div><h3>版本、笔记与本地资料</h3><p>TXT · Markdown · PDF · EPUB</p></div>
               </div>
               <label className="upload-drop">
                 <input
@@ -1285,6 +1513,10 @@ export default function Home() {
             <span>身份边界</span>
             <p>泊舟不会冒充真人、虚构经历，或靠迎合让你留下。</p>
           </div>
+          <button className="preferences-entry" onClick={() => setShowPreferences(true)} type="button">
+            <span className="preferences-entry-mark">SET</span>
+            <span><strong>偏好与模型设置</strong><small>{readerProfile.display_name ? `${readerProfile.display_name} · 本地配置` : "你的称呼、模型与本地连接"}</small></span>
+          </button>
         </aside>
 
         <section className="conversation-panel reveal reveal-three">
@@ -1312,7 +1544,7 @@ export default function Home() {
             {messages.map((message) => (
               <article className={`message message-${message.role}`} key={message.id}>
                 <div className="message-meta">
-                  <span>{message.role === "companion" ? "泊舟" : "你"}</span>
+                  <span>{message.role === "companion" ? "泊舟" : readerProfile.display_name || "你"}</span>
                   {message.move && <em>{message.move}</em>}
                 </div>
                 {message.text.split("\n").map((line, index) => (
@@ -1353,6 +1585,22 @@ export default function Home() {
           </div>
 
           <div className="composer-wrap">
+            <div className="chat-model-selector">
+              <span>本轮模型</span>
+              <select
+                aria-label="选择本轮聊天模型"
+                onChange={(event) => setSelectedModelProfileId(event.target.value || null)}
+                value={selectedModelProfileId ?? ""}
+              >
+                <option value="">{modelSettings.model ? `默认设置 · ${modelSettings.model}` : "演示回复（未配置模型）"}</option>
+                {modelProfiles.map((profile) => (
+                  <option key={profile.id} value={profile.id}>
+                    {profile.name} · {profile.model}{profile.is_default ? "（默认）" : ""}
+                  </option>
+                ))}
+              </select>
+              <button onClick={() => setShowPreferences(true)} type="button">管理</button>
+            </div>
             <div className="direction-tabs" aria-label="选择谈话方向">
               {directionOptions.map((option) => (
                 <button
@@ -1390,7 +1638,9 @@ export default function Home() {
               </div>
             </form>
             <p className="demo-disclaimer">
-              {modelSettings.base_url && modelSettings.model ? `当前模型：${modelSettings.model}` : "演示模式 · 未配置模型"}
+              {selectedModelProfile
+                ? `本轮模型：${selectedModelProfile.name} · ${selectedModelProfile.model}`
+                : modelSettings.base_url && modelSettings.model ? `当前模型：${modelSettings.model}` : "演示模式 · 未配置模型"}
               {" · "}{searchPolicyLabels[searchPolicy]} · 联网工具尚未启用
             </p>
             {composerNotice && <p className="composer-notice" aria-live="polite">{composerNotice}</p>}
