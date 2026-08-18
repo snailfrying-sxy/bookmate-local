@@ -1709,7 +1709,7 @@ export default function Home() {
         </div>
       )}
 
-      <section className="workspace">
+      <section className={`workspace ${showRecommendations ? "recommendations-open" : ""}`}>
         <aside className="companion-panel reveal reveal-two">
           <div className="companion-profile">
             <div className="portrait-wrap">
@@ -1802,9 +1802,9 @@ export default function Home() {
               <button
                 aria-expanded={showRecommendations}
                 className="next-book-button"
-                onClick={() => setShowRecommendations(true)}
+                onClick={() => setShowRecommendations((current) => !current)}
                 type="button"
-              >下一本</button>
+              >{showRecommendations ? "收起书单" : "下一本"}</button>
             </div>
           </div>
 
@@ -1812,10 +1812,12 @@ export default function Home() {
             <div className={`conversation-stream ${messages.length <= 1 ? "conversation-welcome" : ""}`} aria-live="polite" ref={conversationStreamRef}>
               {messages.map((message) => (
                 <article className={`message message-${message.role}`} key={message.id}>
-                  <div className="message-meta">
-                    <span>{message.role === "companion" ? "泊舟" : readerProfile.display_name || "你"}</span>
-                    {message.move && <em>{message.move}</em>}
-                  </div>
+                  {message.role === "companion" && (
+                    <div className="message-meta">
+                      <span>泊舟</span>
+                      {message.move && <em>{message.move}</em>}
+                    </div>
+                  )}
                   <MarkdownMessage content={message.text} />
                   {message.systemNote && <p className="system-note">{message.systemNote}</p>}
                   {message.errorAction && (
@@ -1915,11 +1917,15 @@ export default function Home() {
         </section>
 
         <aside className={`recommendation-panel ${showRecommendations ? "is-open" : ""}`}>
-          <button aria-label="关闭下一本书单" className="recommendation-close" onClick={() => setShowRecommendations(false)} type="button">收起</button>
-          <p className="overline">懂你之后的下一本</p>
-          <h2>不是榜单，<br />是三种邀请。</h2>
+          <div className="recommendation-heading">
+            <div>
+              <p className="overline">下一本</p>
+              <h2>沿着此刻的共鸣</h2>
+            </div>
+            <button aria-label="关闭下一本书单" className="recommendation-close" onClick={() => setShowRecommendations(false)} type="button">收起</button>
+          </div>
           <p className="recommendation-intro">
-            根据你对真实、孤独和道德选择的关注，各选一本。
+            不是榜单。泊舟从延续、反面与跨越三个方向，各留下一本。
           </p>
 
           <div className="recommendation-list">

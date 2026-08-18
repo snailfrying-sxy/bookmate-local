@@ -1755,10 +1755,6 @@ summary:focus-visible {
   font-style: normal;
 }
 
-.message-reader .message-meta {
-  color: rgba(251, 247, 237, 0.72);
-}
-
 .message p {
   margin: 0 0 8px;
   font-family: var(--serif);
@@ -2113,60 +2109,80 @@ summary:focus-visible {
 
 .recommendation-panel {
   border-left: 1px solid var(--line);
-  background: rgba(237, 230, 213, 0.56);
-  overflow-y: auto;
+  background:
+    linear-gradient(180deg, rgba(114, 128, 106, 0.08), transparent 36%),
+    rgba(237, 230, 213, 0.56);
+  overflow: hidden;
+}
+
+.recommendation-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.recommendation-heading > div {
+  min-width: 0;
 }
 
 .recommendation-panel h2 {
   margin: 0;
-  font-size: clamp(25px, 2.4vw, 36px);
-  font-weight: 500;
-  line-height: 1.25;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .recommendation-intro {
-  margin: 13px 0 26px;
+  margin: 10px 0 17px;
   color: var(--ink-soft);
-  font-size: 13px;
-  line-height: 1.7;
+  font-size: 11px;
+  line-height: 1.65;
 }
 
 .recommendation-list {
   display: flex;
+  min-height: 0;
   flex-direction: column;
-  gap: 11px;
+  gap: 9px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
 }
 
 .recommendation-card {
   position: relative;
-  padding: 18px 18px 16px;
+  padding: 13px 14px 12px;
   overflow: hidden;
-  background: rgba(251, 247, 237, 0.78);
-  border: 1px solid rgba(23, 48, 45, 0.12);
-  border-radius: 5px 19px 19px 19px;
+  background: rgba(251, 247, 237, 0.72);
+  border: 1px solid rgba(23, 48, 45, 0.11);
+  border-radius: 4px 15px 15px 15px;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .recommendation-card:hover {
   z-index: 1;
-  box-shadow: 0 16px 30px rgba(39, 44, 36, 0.1);
-  transform: translateX(-5px);
+  border-color: rgba(185, 89, 63, 0.24);
+  box-shadow: 0 12px 24px rgba(39, 44, 36, 0.08);
+  transform: translateY(-2px);
 }
 
 .recommendation-index {
   position: absolute;
-  right: 12px;
-  top: 7px;
-  color: rgba(23, 48, 45, 0.08);
-  font-family: var(--serif);
-  font-size: 42px;
+  right: 13px;
+  top: 13px;
+  color: rgba(23, 48, 45, 0.28);
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
 .lane {
   position: relative;
   display: inline-block;
-  margin-bottom: 11px;
-  padding: 4px 7px;
+  margin-bottom: 8px;
+  padding: 3px 6px;
   border-radius: 999px;
   font-size: 10px;
   font-weight: 700;
@@ -2181,12 +2197,12 @@ summary:focus-visible {
   position: relative;
   margin: 0;
   font-family: var(--serif);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
 }
 
 .recommendation-card .author {
-  margin: 3px 0 11px;
+  margin: 2px 0 7px;
   color: var(--ink-soft);
   font-size: 12px;
 }
@@ -2195,18 +2211,18 @@ summary:focus-visible {
 .recommendation-card details p {
   margin: 0;
   color: var(--ink-soft);
-  font-size: 13px;
-  line-height: 1.65;
+  font-size: 11px;
+  line-height: 1.58;
 }
 
 .recommendation-card details {
-  margin-top: 10px;
+  margin-top: 7px;
 }
 
 .recommendation-card summary {
   color: var(--clay-dark);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .recommendation-card details p {
@@ -2215,14 +2231,14 @@ summary:focus-visible {
 
 .recommendation-card > button {
   width: 100%;
-  margin-top: 13px;
-  padding: 9px 0 0;
+  margin-top: 8px;
+  padding: 7px 0 0;
   color: var(--ink);
   background: transparent;
   border: 0;
   border-top: 1px solid rgba(23, 48, 45, 0.1);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 10px;
   text-align: left;
 }
 
@@ -2233,14 +2249,14 @@ summary:focus-visible {
 
 .different-button {
   width: 100%;
-  margin-top: 15px;
-  padding: 11px;
+  margin-top: 10px;
+  padding: 8px;
   color: var(--ink-soft);
   background: transparent;
   border: 1px dashed rgba(23, 48, 45, 0.25);
   border-radius: 999px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .commercial-note {
@@ -2285,6 +2301,11 @@ summary:focus-visible {
   to { opacity: 1; }
 }
 
+@keyframes recommendation-rail-in {
+  from { opacity: 0; transform: translateX(14px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 @media (min-width: 1181px) {
   /* Desktop is one reading desk: the outer document never competes with chat scrolling. */
   .page-shell {
@@ -2305,6 +2326,10 @@ summary:focus-visible {
     height: auto;
     min-height: 0;
     grid-template-columns: minmax(238px, 268px) minmax(0, 1fr);
+  }
+
+  .workspace.recommendations-open {
+    grid-template-columns: minmax(238px, 258px) minmax(0, 1fr) clamp(300px, 21vw, 338px);
   }
 
   .companion-panel,
@@ -2361,39 +2386,28 @@ summary:focus-visible {
   }
 
   .recommendation-panel {
-    position: absolute;
-    inset: 0 0 0 auto;
-    z-index: 4;
-    width: min(410px, 34vw);
-    padding: 36px 32px 24px;
-    overflow-y: auto;
-    visibility: hidden;
-    pointer-events: none;
-    border-left: 1px solid var(--line);
-    box-shadow: -20px 0 45px rgba(33, 43, 37, 0.12);
-    opacity: 0;
-    transform: translateX(100%);
-    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease, visibility 0.2s ease;
+    display: none;
+    min-width: 0;
+    padding: 25px 18px 17px;
+    flex-direction: column;
   }
 
-  .recommendation-panel.is-open {
-    visibility: visible;
-    pointer-events: auto;
-    opacity: 1;
-    transform: translateX(0);
+  .workspace.recommendations-open .recommendation-panel.is-open {
+    display: flex;
+    animation: recommendation-rail-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
   .recommendation-close {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    float: right;
-    padding: 6px 0 6px 12px;
+    flex: 0 0 auto;
+    padding: 5px 0 5px 8px;
     color: var(--ink-soft);
     background: transparent;
     border: 0;
     cursor: pointer;
-    font-size: 11px;
+    font-size: 10px;
   }
 
   .recommendation-close:hover {
@@ -2401,19 +2415,22 @@ summary:focus-visible {
   }
 
   .recommendation-panel .overline {
-    padding-top: 5px;
+    margin-bottom: 5px;
+    padding-top: 0;
+    font-size: 9px;
   }
 
   .recommendation-intro {
-    margin: 10px 0 18px;
+    margin: 9px 0 14px;
   }
 
   .recommendation-list {
-    gap: 9px;
+    flex: 1 1 auto;
+    gap: 8px;
   }
 
   .recommendation-card {
-    padding: 14px 16px 12px;
+    padding: 12px 13px 11px;
   }
 
   .lane {
@@ -2434,12 +2451,25 @@ summary:focus-visible {
   }
 
   .different-button {
+    flex: 0 0 auto;
     margin-top: 9px;
-    padding: 9px;
+    padding: 8px;
   }
 
   .commercial-note {
+    flex: 0 0 auto;
     margin-top: 5px;
+  }
+
+  .recommendations-open .book-heading,
+  .recommendations-open .conversation-stream,
+  .recommendations-open .composer-wrap {
+    width: min(calc(100% - 48px), 820px);
+  }
+
+  .recommendations-open .conversation-empty .conversation-stream,
+  .recommendations-open .conversation-empty .composer-wrap {
+    width: min(calc(100% - 48px), 780px);
   }
 
   .conversation-panel {
