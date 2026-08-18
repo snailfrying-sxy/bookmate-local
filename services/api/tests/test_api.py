@@ -517,7 +517,6 @@ def test_book_room_can_start_from_reader_notes_without_an_uploaded_ebook(monkeyp
         "/v1/library/books",
         json={
             "title": "没有上传全文的书",
-            "author": "一位作者",
             "reading_status": "reading",
             "reading_progress": "读到第三章",
             "spoiler_policy": "up_to_progress",

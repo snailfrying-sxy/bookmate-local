@@ -1599,8 +1599,8 @@ summary:focus-visible {
 }
 
 .conversation-panel {
-  display: grid;
-  grid-template-rows: auto minmax(320px, 540px) auto;
+  display: flex;
+  flex-direction: column;
   align-self: start;
   min-width: 0;
 }
@@ -1656,8 +1656,8 @@ summary:focus-visible {
   flex-direction: column;
   gap: 24px;
   min-height: 0;
-  /* Keep the full compose action visible in a typical desktop viewport. */
-  max-height: calc(100vh - 470px);
+  /* Stay compact for a new conversation, then scroll once the dialogue grows. */
+  max-height: min(56vh, 540px);
   overflow-y: auto;
   padding: 38px clamp(30px, 4vw, 64px);
   scroll-behavior: smooth;
@@ -1716,6 +1716,94 @@ summary:focus-visible {
   margin-bottom: 0;
 }
 
+.message :is(h1, h2, h3, h4) {
+  margin: 18px 0 8px;
+  font-family: var(--serif);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.message :is(h1, h2) {
+  font-size: clamp(20px, 1.8vw, 25px);
+}
+
+.message h3,
+.message h4 {
+  font-size: 17px;
+}
+
+.message :is(ul, ol) {
+  margin: 7px 0 12px;
+  padding-left: 1.4em;
+  font-family: var(--serif);
+  font-size: clamp(15px, 1.2vw, 18px);
+  line-height: 1.75;
+}
+
+.message li + li {
+  margin-top: 4px;
+}
+
+.message blockquote {
+  margin: 12px 0;
+  padding: 4px 0 4px 14px;
+  color: var(--ink-soft);
+  border-left: 2px solid var(--gold);
+  font-family: var(--serif);
+  line-height: 1.8;
+}
+
+.message :not(pre) > code {
+  padding: 2px 5px;
+  color: var(--clay-dark);
+  background: rgba(185, 89, 63, 0.1);
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.86em;
+}
+
+.message pre {
+  margin: 12px 0;
+  padding: 13px 15px;
+  overflow-x: auto;
+  color: var(--paper-light);
+  background: var(--ink);
+  border-radius: 10px 10px 10px 3px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.message pre code {
+  color: inherit;
+  background: transparent;
+}
+
+.message a {
+  color: var(--clay-dark);
+  text-decoration-color: rgba(185, 89, 63, 0.55);
+  text-underline-offset: 3px;
+}
+
+.message table {
+  display: block;
+  max-width: 100%;
+  margin: 12px 0;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.message :is(th, td) {
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  text-align: left;
+}
+
+.message th {
+  font-weight: 700;
+}
+
 .message .system-note {
   margin-top: 12px;
   padding: 9px 11px;
@@ -1725,6 +1813,17 @@ summary:focus-visible {
   font-family: var(--sans);
   font-size: 12px;
   line-height: 1.55;
+}
+
+.message-recovery-action {
+  margin-top: 12px;
+  padding: 8px 11px;
+  color: var(--paper-light);
+  background: var(--ink);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 11px;
 }
 
 .memory-candidate {
@@ -2205,9 +2304,6 @@ summary:focus-visible {
     grid-column: 1;
   }
 
-  .conversation-stream {
-    max-height: 610px;
-  }
 }
 
 @media (max-width: 760px) {
@@ -2218,6 +2314,7 @@ summary:focus-visible {
   .topbar {
     gap: 6px;
     padding: 0 5px;
+    flex-wrap: wrap;
   }
 
   .brand-lockup {
@@ -2231,8 +2328,14 @@ summary:focus-visible {
   }
 
   .topbar-actions {
+    width: 100%;
     flex: 0 0 auto;
     gap: 4px;
+    justify-content: flex-end;
+  }
+
+  .search-policy {
+    display: none;
   }
 
   .status {
@@ -2295,6 +2398,7 @@ summary:focus-visible {
     display: flex;
     flex-direction: column;
     width: 100%;
+    max-width: 100%;
     min-height: auto;
     border-radius: 24px 7px 24px 7px;
   }
@@ -2360,8 +2464,7 @@ summary:focus-visible {
   }
 
   .conversation-stream {
-    min-height: 320px;
-    max-height: 480px;
+    max-height: min(54svh, 480px);
     padding: 25px 22px;
   }
 
@@ -2375,7 +2478,8 @@ summary:focus-visible {
   }
 
   .conversation-panel {
-    grid-template-rows: auto minmax(320px, 480px) auto;
+    display: flex;
+    max-width: 100%;
   }
 
   .message {
@@ -2387,31 +2491,47 @@ summary:focus-visible {
   }
 
   .composer-wrap {
+    max-width: 100%;
     padding: 8px 13px 20px;
   }
 
+  .composer-footer {
+    max-width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
   .direction-tabs {
-    overflow-x: auto;
+    flex: 1 1 auto;
+    overflow: hidden;
   }
 
   .chat-model-selector {
     flex: 0 1 auto;
   }
 
+  .chat-model-selector > span {
+    display: none;
+  }
+
   .chat-model-selector select {
-    max-width: 126px;
+    max-width: 112px;
   }
 
   .direction-tabs button {
+    padding: 7px 8px;
+    font-size: 11px;
     white-space: nowrap;
   }
 
-  .composer-footer > span {
-    max-width: 52%;
+  .composer-tools {
+    min-width: 0;
+    width: 100%;
+    justify-content: space-between;
   }
 
-  .composer-tools {
-    gap: 6px;
+  .composer-footer > button[type="submit"] {
+    margin-left: auto;
   }
 
   .composer-context {

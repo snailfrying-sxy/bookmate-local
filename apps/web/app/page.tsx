@@ -1,6 +1,8 @@
 "use client";
 
 import { DragEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type Direction = "follow" | "challenge" | "life";
 type Lane = "continue" | "counterpoint" | "crossover";
@@ -24,7 +26,19 @@ type Message = {
   systemNote?: string;
   memoryId?: string;
   memoryText?: string;
+  errorAction?: "retry" | "settings";
+  retryText?: string;
 };
+
+class ChatResponseError extends Error {
+  action: "retry" | "settings";
+
+  constructor(message: string, action: "retry" | "settings") {
+    super(message);
+    this.name = "ChatResponseError";
+    this.action = action;
+  }
+}
 
 type Recommendation = {
   lane: Lane;
@@ -168,6 +182,54 @@ function profileNameForDisplay(profile: ModelProfile) {
     return modelNameForDisplay(profile.model);
   }
   return name;
+}
+
+function MarkdownMessage({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        a: ({ href, children }) => (
+          <a href={href} rel="noreferrer" target="_blank">{children}</a>
+        ),
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
+
+async function chatErrorFromResponse(response: Response): Promise<ChatResponseError> {
+  let detail = "";
+  try {
+    const body = await response.text();
+    if (body) {
+      const parsed = JSON.parse(body) as { detail?: unknown };
+      detail = typeof parsed.detail === "string" ? parsed.detail.toLowerCase() : "";
+    }
+  } catch {
+    // The response status is enough to provide a useful, non-technical next step.
+  }
+
+  const hasDetail = (terms: string[]) => terms.some((term) => detail.includes(term));
+  if (response.status === 401 || response.status === 403 || hasDetail([
+    "authentication", "unauthorized", "forbidden", "api key", "invalid key",
+  ])) {
+    return new ChatResponseError("书友模型没有通过验证。请检查模型设置后再试。", "settings");
+  }
+  if (response.status === 408 || response.status === 504 || hasDetail(["timeout", "timed out"])) {
+    return new ChatResponseError("书友模型这次等得有些久。请稍后重新发送。", "retry");
+  }
+  if (hasDetail(["connecterror", "connection", "network is unreachable", "connection refused"])) {
+    return new ChatResponseError("书友模型暂时无法连接。请检查模型设置后再试。", "settings");
+  }
+  if (response.status === 422) {
+    return new ChatResponseError("这句话暂时无法发送。请确认当前书房后再试。", "retry");
+  }
+  if (response.status >= 500) {
+    return new ChatResponseError("这次对话没有完成。请重新发送；若持续发生，请检查模型设置。", "retry");
+  }
+  return new ChatResponseError("这次没有得到完整回应。请重新发送。", "retry");
 }
 
 function emptyModelSettings(): ModelSettings {
@@ -350,6 +412,7 @@ export default function Home() {
   const [activeBookId, setActiveBookId] = useState<string | null>("the-stranger");
   const [activeBookTitle, setActiveBookTitle] = useState("局外人");
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const conversationStreamRef = useRef<HTMLDivElement>(null);
 
   const activeDirection = useMemo(
     () => directionOptions.find((option) => option.id === direction)!,
@@ -374,6 +437,11 @@ export default function Home() {
   function focusComposer() {
     window.requestAnimationFrame(() => composerRef.current?.focus());
   }
+
+  useEffect(() => {
+    const stream = conversationStreamRef.current;
+    if (stream) stream.scrollTo({ top: stream.scrollHeight, behavior: "smooth" });
+  }, [messages, pending]);
 
   function startRecommendationConversation(item: Recommendation) {
     switchMode("general_companion");
@@ -423,6 +491,7 @@ export default function Home() {
   useEffect(() => {
     let active = true;
     async function loadDemo() {
+      let receivedResponse = false;
       try {
         const [sessionResponse, recommendationResponse] = await Promise.all([
           fetch(`${API_BASE}/v1/demo/session`),
@@ -435,7 +504,10 @@ export default function Home() {
             }),
           }),
         ]);
-        if (!sessionResponse.ok || !recommendationResponse.ok) throw new Error("API unavailable");
+        receivedResponse = true;
+        if (!sessionResponse.ok || !recommendationResponse.ok) {
+          throw new Error("Initial data request failed");
+        }
         const session = await sessionResponse.json();
         const recommendationData = await recommendationResponse.json();
         if (!active) return;
@@ -445,7 +517,8 @@ export default function Home() {
         setRecommendations(recommendationData.items);
         setApiOnline(true);
       } catch {
-        if (active) setApiOnline(false);
+        // An HTTP response means BookMate is reachable even if optional home data failed.
+        if (active) setApiOnline(receivedResponse);
       }
     }
     loadDemo();
@@ -1053,9 +1126,8 @@ export default function Home() {
     }
   }
 
-  async function submitMessage(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const message = input.trim();
+  async function sendMessage(rawMessage: string) {
+    const message = rawMessage.trim();
     if (!message || pending) return;
 
     const readerMessage: Message = {
@@ -1066,6 +1138,7 @@ export default function Home() {
     setMessages((current) => [...current, readerMessage]);
     setInput("");
     setPending(true);
+    let receivedResponse = false;
 
     try {
       const response = await fetch(`${API_BASE}/v1/chat`, {
@@ -1084,7 +1157,8 @@ export default function Home() {
           search_policy: searchPolicy,
         }),
       });
-      if (!response.ok) throw new Error("API unavailable");
+      receivedResponse = true;
+      if (!response.ok) throw await chatErrorFromResponse(response);
       const data = await response.json();
       if (data.conversation_id) setConversationId(data.conversation_id);
       const notes = [
@@ -1105,20 +1179,35 @@ export default function Home() {
       ]);
       setApiOnline(true);
       refreshRelationshipData();
-    } catch {
-      setApiOnline(false);
+    } catch (error) {
+      const chatError = error instanceof ChatResponseError
+        ? error
+        : new ChatResponseError(
+          receivedResponse
+            ? "这次没有得到完整回应。请重新发送。"
+            : "暂时无法连接 BookMate。请确认应用仍在运行后重新发送。",
+          "retry",
+        );
+      setApiOnline(receivedResponse);
       setMessages((current) => [
         ...current,
         {
-          id: `offline-${Date.now()}`,
+          id: `chat-error-${Date.now()}`,
           role: "companion",
-          text: "我暂时没有连上本地 API，所以不想假装已经理解了这句话。启动后端后，我们再从这里认真接着聊。",
-          move: "诚实降级",
+          text: chatError.message,
+          move: "稍后再试",
+          errorAction: chatError.action,
+          retryText: message,
         },
       ]);
     } finally {
       setPending(false);
     }
+  }
+
+  function submitMessage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void sendMessage(input);
   }
 
   return (
@@ -1149,7 +1238,7 @@ export default function Home() {
           </label>
           <span className={`status ${apiOnline === false ? "status-offline" : ""}`}>
             <i />
-            {apiOnline === null ? "正在准备" : apiOnline ? "泊舟已就绪" : "离线预览"}
+            {apiOnline === null ? "正在准备" : apiOnline ? "BookMate 已启动" : "离线预览"}
           </span>
           <button className="import-center-button" onClick={() => setShowImportCenter(true)} type="button">
             导入中心 <span>{documents.length}</span>
@@ -1669,17 +1758,27 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="conversation-stream" aria-live="polite">
+          <div className="conversation-stream" aria-live="polite" ref={conversationStreamRef}>
             {messages.map((message) => (
               <article className={`message message-${message.role}`} key={message.id}>
                 <div className="message-meta">
                   <span>{message.role === "companion" ? "泊舟" : readerProfile.display_name || "你"}</span>
                   {message.move && <em>{message.move}</em>}
                 </div>
-                {message.text.split("\n").map((line, index) => (
-                  line ? <p key={`${message.id}-${index}`}>{line}</p> : <br key={`${message.id}-${index}`} />
-                ))}
+                <MarkdownMessage content={message.text} />
                 {message.systemNote && <p className="system-note">{message.systemNote}</p>}
+                {message.errorAction && (
+                  <button
+                    className="message-recovery-action"
+                    onClick={() => {
+                      if (message.errorAction === "settings") setShowPreferences(true);
+                      else void sendMessage(message.retryText ?? "");
+                    }}
+                    type="button"
+                  >
+                    {message.errorAction === "settings" ? "检查书友模型" : "重新发送"}
+                  </button>
+                )}
                 {message.role === "companion" && message.memoryId && message.memoryText && (
                   <div className="memory-candidate">
                     <span>是否记住：{message.memoryText}</span>
