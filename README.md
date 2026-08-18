@@ -2,23 +2,38 @@
 
 [English README](README.en.md)
 
-BookMate 是一个本地优先、模型可替换、数据可迁移的个人 AI 书友。它面向已经读过一本书、希望继续交流思想的人；不是摘要生成器，也不要求先搭建复杂 RAG 基础设施。
+> **不是把一本书压缩成摘要，而是陪你把读完之后仍未说尽的话继续谈下去。**
 
-本项目采用非商业源代码可用许可：个人、教育、研究与其他非商业用途可使用、修改和分发；商业使用必须另行获得书面授权。详情见 [LICENSE](LICENSE) 和 [NOTICE](NOTICE)。由于包含非商业限制，它不是 OSI 定义下的开源许可证。
+BookMate 是一个本地优先、模型可替换、数据可迁移的个人 AI 书友。它服务于已经读过、正在读，或只记得一本书留下的感受的读者；不要求先搭建复杂 RAG 基础设施，也不把“像人”当成产品目标。
 
-默认能力：
+## 核心概念
 
-- 一个稳定、透明、不冒充真人的 AI 书友“泊舟”；
-- “广泛书友 / 本书房间”双模式；
-- “不联网 / 需要时先问 / 动态问题自动查”策略；
-- 多个 OpenAI Chat Completions 兼容模型和 Responses 模型的本地配置档；可在聊天中按轮次切换；
-- 个人书架：书目独立于文件，可标记想读、在读、已读或暂搁，并绑定多个版本、笔记和资料；
+| 概念 | BookMate 的选择 |
+| --- | --- |
+| **书是一个长期房间** | 一本书是稳定的作品身份，不等同于某个 EPUB、PDF 或笔记文件。 |
+| **读者痕迹也是证据** | 摘录、读后感、问题、进度和剧透边界，即使没有电子书也能开始对话。 |
+| **泊舟是透明的 AI** | 不冒充真人、作者或书中角色；不虚构经历、引文、页码或检索来源。 |
+| **本地优先，不等于只能本地推理** | 数据默认留在本机；可选远程模型时，相关上下文会按需发送并在界面明确提示。 |
+
+## 核心功能
+
+**读书与书房**
+
+- 个人书架独立管理作品，可标记想读、在读、已读或暂搁，并关联多个版本、笔记和资料；
 - 无全文书房：保存阅读进度、剧透边界、交流姿态、摘录、读后感和问题；
-- TXT、Markdown、PDF、EPUB 本地上传、解析、检索、重新归档和删除；
-- SQLite、本地文件和单一数据目录；
+- 支持 TXT、Markdown、PDF、EPUB 的本地上传、解析、检索、重新归档和删除。
+
+**对话与关系**
+
+- “广泛书友 / 本书房间”双模式，默认把一轮认真交流收束为一个可继续的问题；
 - 本地会话恢复，以及全局、单书、会话三层的用户确认记忆；
-- 对话、记忆和书库元数据 JSON 导出；
-- 一个容器、一个端口，不需要 PostgreSQL、Redis 或向量数据库。
+- 对话、记忆和书库元数据可导出为 JSON。
+
+**模型与隐私**
+
+- 多个 OpenAI Chat Completions 兼容模型和 Responses 模型的本地配置档，可测试连接并按轮次切换；
+- “不联网 / 需要时先问 / 动态问题自动查”策略，不会静默执行网页搜索；
+- SQLite、本地文件和单一数据目录；一个容器、一个端口，不需要 PostgreSQL、Redis 或向量数据库。
 
 ## 五分钟启动
 
@@ -155,15 +170,6 @@ npm audit --omit=dev
 
 详细架构见 `docs/AI书友平台_本地优先开源架构方案.md`；全球数据边界见 `docs/AI书友平台_全球书目馆藏与价格数据方案.md`；仓库边界和开发约定见 `docs/REPOSITORY.md`。
 
-## License And Governance
-
-- [LICENSE](LICENSE): PolyForm Noncommercial License 1.0.0; commercial use requires a separate written license.
-- [NOTICE](NOTICE): required copyright and data-distribution notices.
-- [CONTRIBUTING.md](CONTRIBUTING.md): development checks and contribution boundaries.
-- [AGENTS.md](AGENTS.md): durable project memory and guidance for Codex and other coding agents.
-- [SECURITY.md](SECURITY.md): handling for credentials, private reader data, and vulnerabilities.
-- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) and [GOVERNANCE.md](GOVERNANCE.md): collaboration and maintainer decisions.
-
 ## 当前限制
 
 - PDF 扫描件需要后续 OCR 插件。
@@ -172,3 +178,13 @@ npm audit --omit=dev
 - 阅读 App 的专属导入器、通用标注 CSV / JSON 导入、图片 OCR 和手机分享入口仍待实现。
 - 网页资料目前尚未导入；下一步会先做用户主动保存 URL 的来源记录，再考虑受控抓取与搜索连接器。
 - MCP Server、embedding、记忆编辑/合并，以及图书馆/价格 provider adapter 是下一阶段。
+
+## 许可与商业使用
+
+本项目采用 **PolyForm Noncommercial License 1.0.0**：个人、教育、研究与其他非商业用途可使用、修改和分发；**商业使用必须另行获得著作权人的书面授权**。由于包含非商业限制，它是源代码可用项目，**不是 OSI 定义下的开源许可证**。
+
+- [LICENSE](LICENSE)：完整的许可条款；
+- [NOTICE](NOTICE)：必须保留的版权和数据分发声明；
+- [CONTRIBUTING.md](CONTRIBUTING.md)：贡献与开发边界；
+- [SECURITY.md](SECURITY.md)：凭据、私人读者数据和漏洞的处理方式；
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)、[GOVERNANCE.md](GOVERNANCE.md) 与 [AGENTS.md](AGENTS.md)：协作、维护与项目约定。
