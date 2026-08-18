@@ -1,9 +1,29 @@
 # BookMate Local
 
+> **Some books leave behind a sentence you still want to talk through, long
+> after there is no one nearby willing to stay with the question.**
+
 BookMate Local is a local-first personal library and long-term AI reading
-companion. Its companion, Bozhou, helps a reader continue a thoughtful
-conversation about books they have read, are reading, or only remember. It is
-not a summary generator or a generic RAG wrapper.
+companion. Bozhou is not a summary generator, a generic RAG wrapper, or an
+imitation person. It is a transparent AI book-friend that helps a reader return
+to a book, a passage, or a lingering thought and continue the conversation with
+care.
+
+The goal is not to claim a human friendship. It is to give a reader a private,
+lasting space for shared thought: confirmed memories, book-room boundaries, and
+reader evidence let future conversations pick up a thread without pretending
+that the AI has lived experience it does not have.
+
+## What Readers Need
+
+Readers rarely lack summaries or recommendation lists. What is scarce is a
+book-friend who can stay with why a page mattered, why a familiar explanation
+does not convince them, or why a book continues to echo in ordinary life.
+
+BookMate lets the reader build that private conversation with their own books,
+notes, questions, and boundaries. The library, retrieval, RAG, catalog, and
+price capabilities exist to make that conversation more grounded; they are not
+the product's main character.
 
 ## What It Does
 
