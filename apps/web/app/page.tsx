@@ -385,6 +385,7 @@ export default function Home() {
   const [apiOnline, setApiOnline] = useState<boolean | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendation[]>(fallbackRecommendations);
   const [showAlternativeRecommendations, setShowAlternativeRecommendations] = useState(false);
+  const [showRecommendations, setShowRecommendations] = useState(false);
   const [feedbackByMessage, setFeedbackByMessage] = useState<Record<string, MessageFeedback>>({});
   const [composerNotice, setComposerNotice] = useState("");
   const [showLocalSetup, setShowLocalSetup] = useState(false);
@@ -456,6 +457,7 @@ export default function Home() {
   }, [input]);
 
   function startRecommendationConversation(item: Recommendation) {
+    setShowRecommendations(false);
     switchMode("general_companion");
     setInput(item.book.entry_question);
     setComposerNotice(`已带入《${item.book.title}》的切入问题；你可以改写后再交给泊舟。`);
@@ -1756,21 +1758,29 @@ export default function Home() {
               <h2>{mode === "book_room" ? `《${activeBookTitle}》` : "从你的问题出发"}</h2>
               <p>{mode === "book_room" ? (activeDocument ? "你的本地资料 · 按需取证" : "阿尔贝·加缪 · 已读交流") : "不绑定书籍 · 跨作品、生活与思想"}</p>
             </div>
-            <div className="mode-switch" aria-label="选择书友模式">
+            <div className="book-heading-actions">
+              <div className="mode-switch" aria-label="选择书友模式">
+                <button
+                  className={mode === "general_companion" ? "active" : ""}
+                  onClick={() => switchMode("general_companion")}
+                  type="button"
+                >广泛书友</button>
+                <button
+                  className={mode === "book_room" ? "active" : ""}
+                  onClick={() => switchMode("book_room")}
+                  type="button"
+                >本书房间</button>
+              </div>
               <button
-                className={mode === "general_companion" ? "active" : ""}
-                onClick={() => switchMode("general_companion")}
+                aria-expanded={showRecommendations}
+                className="next-book-button"
+                onClick={() => setShowRecommendations(true)}
                 type="button"
-              >广泛书友</button>
-              <button
-                className={mode === "book_room" ? "active" : ""}
-                onClick={() => switchMode("book_room")}
-                type="button"
-              >本书房间</button>
+              >下一本</button>
             </div>
           </div>
 
-          <div className="conversation-stream" aria-live="polite" ref={conversationStreamRef}>
+          <div className={`conversation-stream ${messages.length <= 1 ? "conversation-welcome" : ""}`} aria-live="polite" ref={conversationStreamRef}>
             {messages.map((message) => (
               <article className={`message message-${message.role}`} key={message.id}>
                 <div className="message-meta">
@@ -1878,7 +1888,8 @@ export default function Home() {
           </div>
         </section>
 
-        <aside className="recommendation-panel reveal reveal-four">
+        <aside className={`recommendation-panel ${showRecommendations ? "is-open" : ""}`}>
+          <button aria-label="关闭下一本书单" className="recommendation-close" onClick={() => setShowRecommendations(false)} type="button">收起</button>
           <p className="overline">懂你之后的下一本</p>
           <h2>不是榜单，<br />是三种邀请。</h2>
           <p className="recommendation-intro">

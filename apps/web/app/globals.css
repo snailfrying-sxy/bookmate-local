@@ -1625,6 +1625,17 @@ summary:focus-visible {
   font-size: 12px;
 }
 
+.book-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.next-book-button,
+.recommendation-close {
+  display: none;
+}
+
 .book-switch {
   padding: 9px 13px;
   font-size: 10px;
@@ -2295,6 +2306,7 @@ summary:focus-visible {
     width: 100%;
     height: auto;
     min-height: 0;
+    grid-template-columns: minmax(236px, 280px) minmax(0, 1fr);
   }
 
   .companion-panel,
@@ -2308,8 +2320,89 @@ summary:focus-visible {
     scrollbar-width: thin;
   }
 
+  .companion-panel {
+    padding: 34px 30px;
+  }
+
+  .conversation-panel {
+    position: relative;
+  }
+
+  .book-heading,
+  .conversation-stream,
+  .composer-wrap {
+    width: min(100%, 940px);
+    align-self: center;
+  }
+
+  .book-heading {
+    padding: 28px 4px 18px;
+  }
+
+  .book-heading-actions {
+    gap: 9px;
+  }
+
+  .next-book-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 11px;
+    color: var(--ink-soft);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 11px;
+  }
+
+  .next-book-button:hover {
+    color: var(--paper-light);
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+
   .recommendation-panel {
-    padding: 32px clamp(30px, 2.4vw, 38px) 16px;
+    position: absolute;
+    inset: 0 0 0 auto;
+    z-index: 4;
+    width: min(410px, 34vw);
+    padding: 36px 32px 24px;
+    overflow-y: auto;
+    visibility: hidden;
+    pointer-events: none;
+    border-left: 1px solid var(--line);
+    box-shadow: -20px 0 45px rgba(33, 43, 37, 0.12);
+    opacity: 0;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease, visibility 0.2s ease;
+  }
+
+  .recommendation-panel.is-open {
+    visibility: visible;
+    pointer-events: auto;
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .recommendation-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    float: right;
+    padding: 6px 0 6px 12px;
+    color: var(--ink-soft);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    font-size: 11px;
+  }
+
+  .recommendation-close:hover {
+    color: var(--clay-dark);
+  }
+
+  .recommendation-panel .overline {
+    padding-top: 5px;
   }
 
   .recommendation-intro {
@@ -2357,13 +2450,22 @@ summary:focus-visible {
   .conversation-stream {
     flex: 1 1 auto;
     max-height: none;
-    padding-top: 30px;
-    padding-bottom: 26px;
+    padding: 34px 4px 28px;
     scrollbar-gutter: stable;
+  }
+
+  .conversation-stream.conversation-welcome {
+    justify-content: center;
+    padding-bottom: 92px;
+  }
+
+  .message {
+    max-width: min(88%, 760px);
   }
 
   .composer-wrap {
     flex: 0 0 auto;
+    padding: 12px 4px 24px;
   }
 }
 
