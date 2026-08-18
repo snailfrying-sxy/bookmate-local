@@ -10,6 +10,8 @@ not a summary generator or a generic RAG wrapper.
 - Keeps a stable book room separate from uploaded editions and supporting files.
 - Lets readers capture quotes, reflections, questions, reading progress, and
   spoiler boundaries even when no ebook is available.
+- Provides a separate import workspace for files and editions, reading traces,
+  and creating a book room before a file is available.
 - Stores books, notes, conversations, memories, documents, and indexes locally
   in SQLite and a single data directory.
 - Supports OpenAI Chat Completions-compatible and Responses-style text APIs.

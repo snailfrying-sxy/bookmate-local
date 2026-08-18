@@ -188,7 +188,8 @@ summary:focus-visible {
 .book-switch,
 .search-policy,
 .mode-switch,
-.local-setup-button {
+.local-setup-button,
+.import-center-button {
   border: 1px solid var(--line);
   background: rgba(251, 247, 237, 0.58);
   border-radius: 999px;
@@ -200,6 +201,14 @@ summary:focus-visible {
   font-size: 12px;
 }
 
+.import-center-button {
+  padding: 10px 14px;
+  color: var(--paper-light);
+  background: var(--ink);
+  border-color: var(--ink);
+  font-size: 12px;
+}
+
 .local-setup-button span {
   display: inline-grid;
   min-width: 19px;
@@ -207,6 +216,18 @@ summary:focus-visible {
   margin-left: 4px;
   color: var(--paper-light);
   background: var(--moss);
+  border-radius: 999px;
+  place-items: center;
+  font-size: 8px;
+}
+
+.import-center-button span {
+  display: inline-grid;
+  min-width: 19px;
+  height: 19px;
+  margin-left: 4px;
+  color: var(--ink);
+  background: #e8c68e;
   border-radius: 999px;
   place-items: center;
   font-size: 8px;
@@ -249,6 +270,272 @@ summary:focus-visible {
   border-left: 1px solid rgba(251, 247, 237, 0.5);
   box-shadow: -24px 0 70px rgba(23, 48, 45, 0.18);
   animation: drawer-in 0.36s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.import-backdrop {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: grid;
+  padding: clamp(12px, 3vw, 42px);
+  background: rgba(23, 48, 45, 0.52);
+  backdrop-filter: blur(10px);
+  place-items: center;
+  animation: backdrop-in 0.25s ease both;
+}
+
+.import-workbench {
+  display: flex;
+  width: min(1160px, 100%);
+  max-height: min(840px, calc(100vh - 24px));
+  min-height: min(650px, calc(100vh - 24px));
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 90% 8%, rgba(185, 89, 63, 0.13), transparent 20rem),
+    linear-gradient(140deg, rgba(114, 128, 106, 0.11), transparent 42%),
+    var(--paper-light);
+  border: 1px solid rgba(251, 247, 237, 0.72);
+  border-radius: 28px 9px 28px 9px;
+  box-shadow: 0 32px 100px rgba(8, 21, 19, 0.42);
+  animation: workbench-in 0.36s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.import-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 28px;
+  padding: clamp(26px, 4vw, 42px) clamp(26px, 5vw, 60px) 20px;
+}
+
+.import-heading h2,
+.import-stage h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 500;
+}
+
+.import-heading h2 {
+  font-size: clamp(32px, 4.2vw, 50px);
+}
+
+.import-heading > div > p:last-child {
+  max-width: 600px;
+  margin: 11px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.import-heading > button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+  place-items: center;
+}
+
+.import-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0 clamp(26px, 5vw, 60px);
+  overflow: hidden;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 14px 14px 4px 14px;
+}
+
+.import-stats > div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(251, 247, 237, 0.75);
+}
+
+.import-stats strong {
+  color: var(--clay-dark);
+  font-family: var(--serif);
+  font-size: 25px;
+  font-weight: 500;
+}
+
+.import-stats span {
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.import-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 22px clamp(26px, 5vw, 60px) 16px;
+}
+
+.import-tabs button {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 9px;
+  padding: 12px;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 12px 12px 4px 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.import-tabs button > span {
+  grid-row: span 2;
+  color: var(--clay-dark);
+  font-family: var(--serif);
+  font-size: 19px;
+}
+
+.import-tabs button strong { font-size: 13px; }
+.import-tabs button small { margin-top: 2px; font-size: 11px; }
+
+.import-tabs button.active {
+  color: var(--ink);
+  background: rgba(114, 128, 106, 0.12);
+  border-color: rgba(114, 128, 106, 0.34);
+}
+
+.import-stage {
+  min-height: 0;
+  flex: 1;
+  padding: 24px clamp(26px, 5vw, 60px) 30px;
+  overflow-y: auto;
+  border-top: 1px solid var(--line);
+}
+
+.import-stage-heading,
+.import-list-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.import-stage h3 { font-size: 26px; }
+.import-stage-heading > div > p:last-child,
+.import-list-heading p,
+.import-assurance {
+  margin: 7px 0 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.import-target {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--ink-soft);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.import-target select,
+.import-note-form input,
+.import-note-form select,
+.import-note-form textarea,
+.import-book-form input,
+.import-book-form select {
+  min-width: 0;
+  padding: 10px 11px;
+  color: var(--ink);
+  background: rgba(243, 238, 226, 0.64);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  outline: 0;
+  font-size: 12px;
+}
+
+.import-target select { width: 180px; }
+
+.import-dropzone {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 15px;
+  row-gap: 4px;
+  min-height: 126px;
+  margin-top: 18px;
+  padding: 21px;
+  cursor: pointer;
+  background:
+    repeating-linear-gradient(135deg, rgba(114, 128, 106, 0.06) 0 7px, transparent 7px 15px),
+    rgba(243, 238, 226, 0.52);
+  border: 1px dashed rgba(23, 48, 45, 0.34);
+  border-radius: 6px 20px 20px 20px;
+  align-content: center;
+}
+
+.import-dropzone input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+
+.import-drop-mark {
+  display: grid;
+  grid-row: span 2;
+  width: 47px;
+  height: 53px;
+  color: var(--paper-light);
+  background: var(--clay-dark);
+  border-radius: 4px 13px 13px 4px;
+  place-items: center;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.import-dropzone strong { align-self: end; font-family: var(--serif); font-size: 18px; font-weight: 500; }
+.import-dropzone small { color: var(--ink-soft); font-size: 11px; line-height: 1.5; }
+
+.import-list-heading { margin-top: 24px; }
+.import-list-heading h4 { margin: 0; font-family: var(--serif); font-size: 17px; }
+
+.document-filter { display: flex; gap: 5px; }
+.document-filter button { padding: 6px 8px; color: var(--ink-soft); background: transparent; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; font-size: 10px; }
+.document-filter button.active { color: var(--paper-light); background: var(--ink); border-color: var(--ink); }
+
+.import-document-list { display: grid; gap: 7px; margin-top: 12px; }
+.import-document-list article { display: flex; align-items: center; gap: 8px; padding: 7px; background: rgba(243, 238, 226, 0.42); border: 1px solid rgba(23, 48, 45, 0.1); border-radius: 10px; }
+
+.import-note-form,
+.import-book-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+  max-width: 760px;
+  margin-top: 23px;
+}
+
+.import-note-form label,
+.import-book-form label { display: grid; gap: 6px; color: var(--ink-soft); font-size: 11px; }
+.import-note-wide { grid-column: 1 / -1; }
+.import-note-form textarea { min-height: 76px; resize: vertical; }
+.import-note-form button,
+.import-book-form button { justify-self: start; padding: 10px 15px; color: var(--paper-light); background: var(--ink); border: 0; border-radius: 999px; cursor: pointer; font-size: 12px; }
+.import-note-form button:disabled,
+.import-book-form button:disabled { cursor: not-allowed; opacity: 0.42; }
+.import-assurance { max-width: 620px; }
+
+.import-status {
+  margin: 0;
+  padding: 12px clamp(26px, 5vw, 60px);
+  color: var(--paper-light);
+  background: var(--ink);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .relationship-drawer {
@@ -905,6 +1192,27 @@ summary:focus-visible {
   opacity: 0.45;
 }
 
+.library-import-link {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 15px;
+  color: var(--ink);
+  background: rgba(114, 128, 106, 0.1);
+  border: 1px solid rgba(114, 128, 106, 0.26);
+  border-radius: 8px 17px 17px 17px;
+  cursor: pointer;
+  font-family: var(--serif);
+  font-size: 15px;
+  text-align: left;
+}
+
+.library-import-link span {
+  color: var(--clay-dark);
+  font-family: var(--sans);
+}
+
 .upload-drop {
   display: grid;
   min-height: 110px;
@@ -1493,14 +1801,14 @@ summary:focus-visible {
 .thinking span { margin-left: 4px; }
 
 .composer-wrap {
-  padding: 12px clamp(20px, 4vw, 54px) 25px;
+  padding: 14px clamp(20px, 4vw, 54px) 25px;
 }
 
 .chat-model-selector {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0 0 8px 12px;
+  gap: 6px;
+  min-width: 0;
   color: var(--ink-soft);
   font-size: 11px;
 }
@@ -1513,8 +1821,8 @@ summary:focus-visible {
 
 .chat-model-selector select {
   min-width: 0;
-  max-width: 260px;
-  padding: 7px 29px 7px 10px;
+  max-width: 180px;
+  padding: 6px 25px 6px 8px;
   overflow: hidden;
   color: var(--ink);
   background: rgba(251, 247, 237, 0.68);
@@ -1526,7 +1834,7 @@ summary:focus-visible {
 }
 
 .chat-model-selector button {
-  padding: 6px 9px;
+  padding: 4px 2px;
   color: var(--ink-soft);
   background: transparent;
   border: 0;
@@ -1539,7 +1847,7 @@ summary:focus-visible {
 .direction-tabs {
   display: flex;
   gap: 5px;
-  margin: 0 0 8px 12px;
+  min-width: 0;
 }
 
 .direction-tabs button {
@@ -1559,12 +1867,58 @@ summary:focus-visible {
 }
 
 .composer {
-  padding: 15px 17px 12px;
+  padding: 0 17px 12px;
   background: var(--paper-light);
   border: 1px solid rgba(23, 48, 45, 0.2);
   border-radius: 22px 22px 7px 22px;
   box-shadow: 0 12px 34px rgba(33, 43, 37, 0.08);
   transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.composer-context {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 48px;
+  border-bottom: 1px solid rgba(23, 48, 45, 0.1);
+}
+
+.composer-room {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.composer-room span {
+  flex: 0 0 auto;
+  color: var(--clay-dark);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.composer-room strong {
+  overflow: hidden;
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.composer-context-action {
+  flex: 0 0 auto;
+  padding: 5px 0;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 11px;
+  text-decoration: underline;
+  text-decoration-color: rgba(23, 48, 45, 0.3);
+  text-underline-offset: 4px;
 }
 
 .composer:focus-within {
@@ -1582,6 +1936,7 @@ summary:focus-visible {
   font-family: var(--serif);
   font-size: 15px;
   line-height: 1.65;
+  padding: 13px 0 11px;
 }
 
 .composer textarea::placeholder {
@@ -1593,13 +1948,15 @@ summary:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-top: 7px;
+  padding-top: 9px;
   border-top: 1px solid rgba(23, 48, 45, 0.08);
 }
 
-.composer-footer > span {
-  color: var(--ink-soft);
-  font-size: 12px;
+.composer-tools {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
 }
 
 .composer-footer button {
@@ -1898,6 +2255,20 @@ summary:focus-visible {
     font-size: 0;
   }
 
+  .import-center-button {
+    padding: 8px 7px;
+    font-size: 0;
+  }
+
+  .import-center-button::before {
+    content: "导入";
+    font-size: 11px;
+  }
+
+  .import-center-button span {
+    font-size: 10px;
+  }
+
   .local-setup-button::before {
     content: "书库";
     font-size: 11px;
@@ -2018,15 +2389,14 @@ summary:focus-visible {
 
   .direction-tabs {
     overflow-x: auto;
-    margin-left: 3px;
   }
 
   .chat-model-selector {
-    margin-left: 3px;
+    flex: 0 1 auto;
   }
 
   .chat-model-selector select {
-    max-width: min(220px, 56vw);
+    max-width: 126px;
   }
 
   .direction-tabs button {
@@ -2035,6 +2405,18 @@ summary:focus-visible {
 
   .composer-footer > span {
     max-width: 52%;
+  }
+
+  .composer-tools {
+    gap: 6px;
+  }
+
+  .composer-context {
+    gap: 8px;
+  }
+
+  .composer-room span {
+    display: none;
   }
 
   .recommendation-panel {
@@ -2063,6 +2445,69 @@ summary:focus-visible {
     width: 100vw;
     padding: 25px 20px 32px;
   }
+
+  .import-backdrop {
+    padding: 0;
+  }
+
+  .import-workbench {
+    width: 100vw;
+    min-height: 100vh;
+    max-height: 100vh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .import-heading {
+    padding: 23px 20px 17px;
+  }
+
+  .import-heading h2 {
+    font-size: 34px;
+  }
+
+  .import-heading > div > p:last-child {
+    font-size: 12px;
+  }
+
+  .import-stats {
+    margin: 0 20px;
+  }
+
+  .import-stats > div {
+    min-width: 0;
+    flex-direction: column;
+    gap: 0;
+    padding: 10px;
+  }
+
+  .import-stats strong { font-size: 22px; }
+  .import-stats span { font-size: 10px; }
+
+  .import-tabs {
+    gap: 3px;
+    padding: 16px 14px 12px;
+  }
+
+  .import-tabs button { display: block; padding: 9px 7px; text-align: center; }
+  .import-tabs button > span { display: block; font-size: 14px; }
+  .import-tabs button strong { display: block; margin-top: 2px; font-size: 11px; }
+  .import-tabs button small { display: none; }
+
+  .import-stage { padding: 20px; }
+  .import-stage-heading,
+  .import-list-heading { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .import-stage h3 { font-size: 23px; }
+  .import-target { width: 100%; justify-content: space-between; }
+  .import-target select { width: min(230px, 68vw); }
+  .import-dropzone { grid-template-columns: auto 1fr; min-height: 112px; padding: 15px; }
+  .import-dropzone strong { font-size: 16px; }
+  .import-document-list article { align-items: flex-start; }
+  .import-document-list .document-assignment { width: 70px; }
+  .import-note-form,
+  .import-book-form { grid-template-columns: 1fr; }
+  .import-note-wide { grid-column: auto; }
+  .import-status { padding: 11px 20px; }
 
   .model-form > label {
     grid-template-columns: 1fr;

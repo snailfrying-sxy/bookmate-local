@@ -13,6 +13,8 @@ type SpoilerPolicy = "avoid" | "up_to_progress" | "allow";
 type CompanionStance = "explore" | "challenge" | "organize" | "book_club";
 type ReadingNoteKind = "quote" | "reflection" | "question";
 type MessageFeedback = "understood" | "insightful" | "off_base";
+type ImportTab = "files" | "books" | "notes";
+type DocumentFilter = "all" | "unfiled" | "assigned";
 
 type Message = {
   id: string;
@@ -279,6 +281,7 @@ export default function Home() {
   const [feedbackByMessage, setFeedbackByMessage] = useState<Record<string, MessageFeedback>>({});
   const [composerNotice, setComposerNotice] = useState("");
   const [showLocalSetup, setShowLocalSetup] = useState(false);
+  const [showImportCenter, setShowImportCenter] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
   const [libraryBooks, setLibraryBooks] = useState<LibraryBook[]>([]);
@@ -288,6 +291,9 @@ export default function Home() {
   const [newBookAuthor, setNewBookAuthor] = useState("");
   const [newBookStatus, setNewBookStatus] = useState<ReadingStatus>("want_to_read");
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
+  const [importTab, setImportTab] = useState<ImportTab>("files");
+  const [importTargetBookId, setImportTargetBookId] = useState<string | null>(null);
+  const [documentFilter, setDocumentFilter] = useState<DocumentFilter>("all");
   const [modelSettings, setModelSettings] = useState<ModelSettings>({
     protocol: "chat_completions",
     base_url: "",
@@ -333,6 +339,10 @@ export default function Home() {
   const displayedRecommendations = showAlternativeRecommendations
     ? alternativeRecommendations
     : recommendations;
+  const visibleImportDocuments = useMemo(() => documents.filter((document) => (
+    documentFilter === "all"
+      || (documentFilter === "unfiled" ? !document.book_id : Boolean(document.book_id))
+  )), [documents, documentFilter]);
 
   function focusComposer() {
     window.requestAnimationFrame(() => composerRef.current?.focus());
@@ -485,6 +495,7 @@ export default function Home() {
       const book: LibraryBook = await response.json();
       setLibraryBooks((current) => [book, ...current]);
       setSelectedLibraryBookId(book.id);
+      setImportTargetBookId(book.id);
       setSelectedDocumentId(null);
       setReadingNotes([]);
       setActiveBookId(null);
@@ -538,15 +549,19 @@ export default function Home() {
     }
   }
 
-  async function captureReadingNote(event: FormEvent<HTMLFormElement>) {
+  async function captureReadingNote(event: FormEvent<HTMLFormElement>, targetBookId = selectedLibraryBookId) {
     event.preventDefault();
-    if (!selectedLibraryBook) return;
+    if (!targetBookId) {
+      setSetupStatus("先选择一本书，再把这条阅读痕迹留给它。");
+      return;
+    }
+    const targetBook = libraryBooks.find((book) => book.id === targetBookId) ?? null;
     const form = new FormData(event.currentTarget);
     const content = String(form.get("content") ?? "").trim();
     if (!content) return;
     setSetupPending(true);
     try {
-      const response = await fetch(`${API_BASE}/v1/library/books/${selectedLibraryBook.id}/notes`, {
+      const response = await fetch(`${API_BASE}/v1/library/books/${targetBookId}/notes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -558,12 +573,12 @@ export default function Home() {
       });
       if (!response.ok) throw new Error(await response.text());
       const note: ReadingNote = await response.json();
-      setReadingNotes((current) => [note, ...current]);
+      if (selectedLibraryBookId === targetBookId) setReadingNotes((current) => [note, ...current]);
       setLibraryBooks((current) => current.map((book) => (
-        book.id === selectedLibraryBook.id ? { ...book, note_count: book.note_count + 1 } : book
+        book.id === targetBookId ? { ...book, note_count: book.note_count + 1 } : book
       )));
       event.currentTarget.reset();
-      setSetupStatus("这条阅读痕迹已只保存到本机，并会在当前书房中作为你的线索。 ");
+      setSetupStatus(`这条阅读痕迹已保存到《${targetBook?.title ?? "所选书目"}》，并会在书房中作为你的线索。`);
     } catch (error) {
       setSetupStatus(`保存阅读痕迹失败：${error instanceof Error ? error.message : "未知错误"}`);
     } finally {
@@ -936,23 +951,24 @@ export default function Home() {
     }
   }
 
-  async function uploadDocument(file: File | undefined) {
+  async function uploadDocument(file: File | undefined, targetBookId = selectedLibraryBookId) {
     if (!file) return;
     setSetupPending(true);
     setSetupStatus(`正在本机解析《${file.name}》……`);
     const form = new FormData();
     form.append("file", file);
-    if (selectedLibraryBookId) form.append("book_id", selectedLibraryBookId);
+    if (targetBookId) form.append("book_id", targetBookId);
     try {
       const response = await fetch(`${API_BASE}/v1/knowledge/documents`, { method: "POST", body: form });
       if (!response.ok) throw new Error(await response.text());
       const document = await response.json();
+      const owner = libraryBooks.find((book) => book.id === document.book_id) ?? null;
       setDocuments((current) => [document, ...current]);
       setSelectedDocumentId(document.id);
       if (document.book_id) setSelectedLibraryBookId(document.book_id);
       setActiveBookId(null);
-      setActiveBookTitle(selectedLibraryBook?.title ?? document.name);
-      switchMode("book_room", selectedLibraryBook?.title ?? document.name);
+      setActiveBookTitle(owner?.title ?? document.name);
+      switchMode("book_room", owner?.title ?? document.name);
       refreshLibraryData();
       setSetupStatus(`《${document.name}》已在本机建立 ${document.chunk_count} 个文本片段。`);
     } catch (error) {
@@ -1100,6 +1116,9 @@ export default function Home() {
             <i />
             {apiOnline === null ? "正在连接" : apiOnline ? (modelSettings.base_url && modelSettings.model ? `本地模型 · ${modelSettings.model}` : "本地演示 API") : "离线预览"}
           </span>
+          <button className="import-center-button" onClick={() => setShowImportCenter(true)} type="button">
+            导入中心 <span>{documents.length}</span>
+          </button>
           <button className="local-setup-button" onClick={() => setShowLocalSetup(true)} type="button">
             本地书库 <span>{documents.length}</span>
           </button>
@@ -1182,6 +1201,126 @@ export default function Home() {
               <p>导出会话、记忆和书库元数据；不会自动包含原始书籍文件或 API Key。</p>
             </div>
             <p className="setup-status" aria-live="polite">{relationshipStatus}</p>
+          </section>
+        </div>
+      )}
+
+      {showImportCenter && (
+        <div className="import-backdrop" role="presentation" onMouseDown={() => setShowImportCenter(false)}>
+          <section
+            aria-label="导入中心"
+            aria-modal="true"
+            className="import-workbench"
+            onMouseDown={(event) => event.stopPropagation()}
+            role="dialog"
+          >
+            <header className="import-heading">
+              <div>
+                <p className="overline">Bring your reading in</p>
+                <h2>导入中心</h2>
+                <p>先决定内容属于哪本书，再选择最自然的带入方式。导入不会覆盖你原有的书目、笔记或文件。</p>
+              </div>
+              <button aria-label="关闭导入中心" onClick={() => setShowImportCenter(false)} type="button">×</button>
+            </header>
+
+            <div className="import-stats" aria-label="本地资料概览">
+              <div><strong>{libraryBooks.length}</strong><span>本书书房</span></div>
+              <div><strong>{documents.length}</strong><span>本地文件</span></div>
+              <div><strong>{documents.filter((document) => !document.book_id).length}</strong><span>待归档资料</span></div>
+            </div>
+
+            <nav className="import-tabs" aria-label="选择导入方式">
+              <button className={importTab === "files" ? "active" : ""} onClick={() => setImportTab("files")} type="button">
+                <span>01</span><strong>文件与版本</strong><small>EPUB、PDF、TXT、Markdown</small>
+              </button>
+              <button className={importTab === "notes" ? "active" : ""} onClick={() => setImportTab("notes")} type="button">
+                <span>02</span><strong>阅读痕迹</strong><small>摘录、感想与问题</small>
+              </button>
+              <button className={importTab === "books" ? "active" : ""} onClick={() => setImportTab("books")} type="button">
+                <span>03</span><strong>先建一本书</strong><small>没有文件也能开始</small>
+              </button>
+            </nav>
+
+            {importTab === "files" && (
+              <section className="import-stage">
+                <div className="import-stage-heading">
+                  <div><p className="overline">File import</p><h3>把版本或资料放进书房</h3></div>
+                  <label className="import-target"><span>归属书房</span><select onChange={(event) => setImportTargetBookId(event.target.value || null)} value={importTargetBookId ?? ""}><option value="">暂不归档</option>{libraryBooks.map((book) => <option key={book.id} value={book.id}>《{book.title}》</option>)}</select></label>
+                </div>
+                <label className="import-dropzone">
+                  <input
+                    accept=".txt,.md,.pdf,.epub"
+                    disabled={setupPending}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      event.target.value = "";
+                      uploadDocument(file, importTargetBookId);
+                    }}
+                    type="file"
+                  />
+                  <span className="import-drop-mark">FILE</span>
+                  <strong>选择文件，或把文件拖到这里</strong>
+                  <small>支持 EPUB、PDF、TXT、Markdown；默认最大 50 MB。不会修改你的原始文件。</small>
+                </label>
+                <div className="import-list-heading"><div><h4>已导入资料</h4><p>资料可以随时重新归档，导入完成后可直接进入对应书房聊天。</p></div><div className="document-filter"><button className={documentFilter === "all" ? "active" : ""} onClick={() => setDocumentFilter("all")} type="button">全部 {documents.length}</button><button className={documentFilter === "unfiled" ? "active" : ""} onClick={() => setDocumentFilter("unfiled")} type="button">待归档 {documents.filter((document) => !document.book_id).length}</button></div></div>
+                <div className="import-document-list">
+                  {visibleImportDocuments.length === 0 && <p className="empty-library">这里还没有符合条件的资料。可以先导入一个版本，或在“先建一本书”中创建书房。</p>}
+                  {visibleImportDocuments.map((document) => (
+                    <article key={document.id}>
+                      <button className="document-select" onClick={() => {
+                        setSelectedDocumentId(document.id);
+                        setSelectedLibraryBookId(document.book_id);
+                        const owner = libraryBooks.find((book) => book.id === document.book_id);
+                        if (document.book_id) loadBookRoomDetails(document.book_id);
+                        else setReadingNotes([]);
+                        setActiveBookId(null);
+                        setActiveBookTitle(owner?.title ?? document.name);
+                        switchMode("book_room", owner?.title ?? document.name);
+                        setShowImportCenter(false);
+                      }} type="button">
+                        <span className="file-mark">{document.extension.slice(1).toUpperCase()}</span>
+                        <span><strong>{document.name}</strong><small>{libraryBooks.find((book) => book.id === document.book_id)?.title ?? "待归档"} · {document.chunk_count} 个片段 · {formatBytes(document.size_bytes)}</small></span>
+                      </button>
+                      <select aria-label={`调整《${document.name}》的归属`} className="document-assignment" disabled={setupPending} onChange={(event) => reassignDocument(document, event.target.value)} value={document.book_id ?? ""}><option value="">待归档</option>{libraryBooks.map((book) => <option key={book.id} value={book.id}>{book.title}</option>)}</select>
+                      <button className="document-delete" onClick={() => removeDocument(document)} type="button">删除</button>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {importTab === "notes" && (
+              <section className="import-stage">
+                <div className="import-stage-heading">
+                  <div><p className="overline">Reading capture</p><h3>先留下让你停住的地方</h3></div>
+                  <label className="import-target"><span>留给哪本书</span><select disabled={libraryBooks.length === 0} onChange={(event) => setImportTargetBookId(event.target.value || null)} value={importTargetBookId ?? ""}><option value="">选择一本书</option>{libraryBooks.map((book) => <option key={book.id} value={book.id}>《{book.title}》</option>)}</select></label>
+                </div>
+                {libraryBooks.length === 0 ? <p className="empty-library">阅读痕迹需要有一个书房。请先在“先建一本书”中添加书目；没有电子书也完全可以。</p> : (
+                  <form className="import-note-form" onSubmit={(event) => captureReadingNote(event, importTargetBookId)}>
+                    <label><span>类型</span><select defaultValue="reflection" name="kind">{(Object.keys(readingNoteKindLabels) as ReadingNoteKind[]).map((kind) => <option key={kind} value={kind}>{readingNoteKindLabels[kind]}</option>)}</select></label>
+                    <label><span>位置</span><input name="locator" placeholder="可选：第三章、页码、进度" /></label>
+                    <label className="import-note-wide"><span>原文或划线</span><textarea name="quote" placeholder="可选；没有原文也没关系" /></label>
+                    <label className="import-note-wide"><span>你的想法</span><textarea name="content" placeholder="写下你想继续聊的判断、感受或问题……" required /></label>
+                    <button disabled={setupPending || !importTargetBookId} type="submit">保存到书房</button>
+                  </form>
+                )}
+              </section>
+            )}
+
+            {importTab === "books" && (
+              <section className="import-stage">
+                <div className="import-stage-heading"><div><p className="overline">A room before a file</p><h3>先为一本书留出位置</h3><p>实体书、阅读 App 里的书，或只剩印象的作品，都可以先建立书房。</p></div></div>
+                <form className="import-book-form" onSubmit={createLibraryBook}>
+                  <label><span>书名</span><input onChange={(event) => setNewBookTitle(event.target.value)} placeholder="例如：《局外人》" value={newBookTitle} /></label>
+                  <label><span>作者</span><input onChange={(event) => setNewBookAuthor(event.target.value)} placeholder="可选" value={newBookAuthor} /></label>
+                  <label><span>阅读状态</span><select onChange={(event) => setNewBookStatus(event.target.value as ReadingStatus)} value={newBookStatus}>{(Object.keys(readingStatusLabels) as ReadingStatus[]).map((status) => <option key={status} value={status}>{readingStatusLabels[status]}</option>)}</select></label>
+                  <button disabled={setupPending || !newBookTitle.trim()} type="submit">建立书房</button>
+                </form>
+                <p className="import-assurance">建立书房不会要求上传文件。之后可继续导入版本、保存阅读痕迹，或直接开始聊天。</p>
+              </section>
+            )}
+
+            <p className="import-status" aria-live="polite">{setupStatus}</p>
           </section>
         </div>
       )}
@@ -1336,24 +1475,7 @@ export default function Home() {
               <div className="setup-section-title">
                 <span>01</span><div><h3>我的书架</h3><p>作品独立于文件、笔记和对话存在</p></div>
               </div>
-              <form className="library-book-form" onSubmit={createLibraryBook}>
-                <input
-                  onChange={(event) => setNewBookTitle(event.target.value)}
-                  placeholder="书名，例如《局外人》"
-                  value={newBookTitle}
-                />
-                <input
-                  onChange={(event) => setNewBookAuthor(event.target.value)}
-                  placeholder="作者（可选）"
-                  value={newBookAuthor}
-                />
-                <select onChange={(event) => setNewBookStatus(event.target.value as ReadingStatus)} value={newBookStatus}>
-                  {(Object.keys(readingStatusLabels) as ReadingStatus[]).map((status) => (
-                    <option key={status} value={status}>{readingStatusLabels[status]}</option>
-                  ))}
-                </select>
-                <button disabled={setupPending || !newBookTitle.trim()} type="submit">加入书架</button>
-              </form>
+              <button className="library-import-link" onClick={() => { setShowLocalSetup(false); setShowImportCenter(true); setImportTab("books"); }} type="button">导入一本书、资料或阅读痕迹 <span>↗</span></button>
               <div className="shelf-list">
                 {libraryBooks.length === 0 && <p className="empty-library">先添加一本书；之后可以为它绑定多个版本、笔记和资料。</p>}
                 {libraryBooks.map((book) => (
@@ -1426,59 +1548,9 @@ export default function Home() {
 
             <div className="library-manager">
               <div className="setup-section-title">
-                <span>04</span><div><h3>版本、笔记与本地资料</h3><p>TXT · Markdown · PDF · EPUB</p></div>
+                <span>04</span><div><h3>版本与资料</h3><p>导入、重新归档与批量查看都在独立工作台中完成</p></div>
               </div>
-              <label className="upload-drop">
-                <input
-                  accept=".txt,.md,.pdf,.epub"
-                  disabled={setupPending}
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    event.target.value = "";
-                    uploadDocument(file);
-                  }}
-                  type="file"
-                />
-                <strong>选择一本自己的书或笔记</strong>
-                <span>{selectedLibraryBook ? `将绑定到《${selectedLibraryBook.title}》` : "未选择书架项目时会作为未归档资料保存"} · 默认最大 50 MB</span>
-              </label>
-              <div className="document-list">
-                {documents.length === 0 && <p className="empty-library">还没有本地资料。你仍然可以先凭模型已有知识交流。</p>}
-                {documents.map((document) => (
-                  <article className={selectedDocumentId === document.id ? "selected" : ""} key={document.id}>
-                    <button
-                      className="document-select"
-                      onClick={() => {
-                        setSelectedDocumentId(document.id);
-                        setSelectedLibraryBookId(document.book_id);
-                        setActiveBookId(null);
-                        const owner = libraryBooks.find((book) => book.id === document.book_id);
-                        if (document.book_id) loadBookRoomDetails(document.book_id);
-                        else setReadingNotes([]);
-                        setActiveBookTitle(owner?.title ?? document.name);
-                        switchMode("book_room", owner?.title ?? document.name);
-                      }}
-                      type="button"
-                    >
-                      <span className="file-mark">{document.extension.slice(1).toUpperCase()}</span>
-                      <span><strong>{document.name}</strong><small>{libraryBooks.find((book) => book.id === document.book_id)?.title ?? "未归档"} · {document.chunk_count} 个片段 · {formatBytes(document.size_bytes)}</small></span>
-                    </button>
-                    <select
-                      aria-label={`调整《${document.name}》的归属`}
-                      className="document-assignment"
-                      disabled={setupPending}
-                      onChange={(event) => reassignDocument(document, event.target.value)}
-                      value={document.book_id ?? ""}
-                    >
-                      <option value="">未归档</option>
-                      {libraryBooks.map((book) => (
-                        <option key={book.id} value={book.id}>{book.title}</option>
-                      ))}
-                    </select>
-                    <button className="document-delete" onClick={() => removeDocument(document)} type="button">删除</button>
-                  </article>
-                ))}
-              </div>
+              <button className="library-import-link" onClick={() => { setShowLocalSetup(false); setShowImportCenter(true); setImportTab("files"); }} type="button">打开导入中心管理 {documents.length} 份本地资料 <span>↗</span></button>
             </div>
 
             <p className="setup-status" aria-live="polite">{setupStatus}</p>
@@ -1585,36 +1657,11 @@ export default function Home() {
           </div>
 
           <div className="composer-wrap">
-            <div className="chat-model-selector">
-              <span>本轮模型</span>
-              <select
-                aria-label="选择本轮聊天模型"
-                onChange={(event) => setSelectedModelProfileId(event.target.value || null)}
-                value={selectedModelProfileId ?? ""}
-              >
-                <option value="">{modelSettings.model ? `默认设置 · ${modelSettings.model}` : "演示回复（未配置模型）"}</option>
-                {modelProfiles.map((profile) => (
-                  <option key={profile.id} value={profile.id}>
-                    {profile.name} · {profile.model}{profile.is_default ? "（默认）" : ""}
-                  </option>
-                ))}
-              </select>
-              <button onClick={() => setShowPreferences(true)} type="button">管理</button>
-            </div>
-            <div className="direction-tabs" aria-label="选择谈话方向">
-              {directionOptions.map((option) => (
-                <button
-                  className={direction === option.id ? "active" : ""}
-                  key={option.id}
-                  onClick={() => setDirection(option.id)}
-                  type="button"
-                  title={option.note}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
             <form className="composer" onSubmit={submitMessage}>
+              <div className="composer-context">
+                <div className="composer-room"><span>{mode === "book_room" ? "当前书房" : "全局书友"}</span><strong>{mode === "book_room" ? `《${activeBookTitle}》` : "不绑定书籍"}</strong></div>
+                <button className="composer-context-action" onClick={() => mode === "book_room" ? setShowLocalSetup(true) : setShowImportCenter(true)} type="button">{mode === "book_room" ? "切换书房" : "选择一本书"}</button>
+              </div>
               <textarea
                 aria-label="说说你读完后的想法"
                 maxLength={4000}
@@ -1631,7 +1678,22 @@ export default function Home() {
                 value={input}
               />
               <div className="composer-footer">
-                <span>{activeDirection.note}</span>
+                <div className="composer-tools">
+                  <div className="direction-tabs" aria-label="选择谈话方向">
+                    {directionOptions.map((option) => (
+                      <button
+                        className={direction === option.id ? "active" : ""}
+                        key={option.id}
+                        onClick={() => setDirection(option.id)}
+                        type="button"
+                        title={option.note}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                  <label className="chat-model-selector"><span>模型</span><select aria-label="选择本轮聊天模型" onChange={(event) => setSelectedModelProfileId(event.target.value || null)} value={selectedModelProfileId ?? ""}><option value="">{modelSettings.model ? `默认 · ${modelSettings.model}` : "演示回复"}</option>{modelProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.name} · {profile.model}{profile.is_default ? "（默认）" : ""}</option>)}</select><button onClick={() => setShowPreferences(true)} type="button">管理</button></label>
+                </div>
                 <button disabled={!input.trim() || pending} type="submit">
                   {pending ? "正在回应" : "交给泊舟"}<b>↗</b>
                 </button>
