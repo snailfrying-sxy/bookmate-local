@@ -1254,15 +1254,6 @@ export default function Home() {
             <i />
             {apiOnline === null ? "正在准备" : apiOnline ? "BookMate 已启动" : "离线预览"}
           </span>
-          <button className="import-center-button" onClick={() => setShowImportCenter(true)} type="button">
-            导入中心 <span>{documents.length}</span>
-          </button>
-          <button className="local-setup-button" onClick={() => setShowLocalSetup(true)} type="button">
-            本地书库 <span>{documents.length}</span>
-          </button>
-          <button className="memory-button" onClick={() => setShowRelationship(true)} type="button">
-            我们记得的事 <span>{memories.filter((memory) => memory.status === "confirmed").length}</span>
-          </button>
         </div>
       </header>
 
@@ -1720,38 +1711,75 @@ export default function Home() {
 
       <section className="workspace">
         <aside className="companion-panel reveal reveal-two">
-          <div className="portrait-wrap">
-            <div className="portrait">舟</div>
-            <span className="ai-label">AI</span>
-          </div>
-          <p className="overline">由你的阅读，慢慢认识你</p>
-          <h1>泊舟</h1>
-          <p className="identity-copy">
-            书合上以后，问题还在。我会带着你愿意留下的线索，陪你把那句没说完的话继续说下去。
-          </p>
-
-          <div className="temperament">
-            <span>先听你说完</span><span>不只会赞同</span><span>记得未完的问题</span>
+          <div className="companion-profile">
+            <div className="portrait-wrap">
+              <div className="portrait">舟</div>
+              <span className="ai-label">AI</span>
+            </div>
+            <div>
+              <p className="overline">你的私人 AI 书友</p>
+              <h1>泊舟</h1>
+              <p className="identity-copy">在这里，继续那些还没说完的话。</p>
+            </div>
           </div>
 
-          <div className="thread-card">
-            <p className="overline">泊舟相信</p>
-            <blockquote>共频，不是拥有相同的答案，而是愿意沿着彼此的思路，再往深处走一点。</blockquote>
-            <div className="thread-line"><i /></div>
-            <small>你的书、感受与确认过的记忆，让每次重逢都能从上次停下的地方继续。</small>
-          </div>
-
-          <div className="boundary-note">
-            <span>始终坦诚</span>
-            <p>泊舟是一位 AI 书友，不冒充真人，不虚构经历、引文或理解。</p>
-          </div>
-          <button className="preferences-entry" onClick={() => setShowPreferences(true)} type="button">
-            <span className="preferences-entry-mark">SET</span>
-            <span><strong>偏好与模型</strong><small>{readerProfile.display_name ? `${readerProfile.display_name} · 你的个人设置` : "称呼与书友模型"}</small></span>
+          <button
+            className="new-conversation-button"
+            onClick={() => switchMode(mode, mode === "book_room" ? activeBookTitle : undefined)}
+            type="button"
+          >
+            <span>＋</span>
+            开始新的对话
           </button>
+
+          <nav className="companion-nav" aria-label="书友空间导航">
+            <p className="companion-nav-label">此刻</p>
+            <button
+              className={mode === "book_room" ? "active" : ""}
+              onClick={() => {
+                if (mode === "book_room") composerRef.current?.focus();
+                else switchMode("book_room", activeBookTitle);
+              }}
+              type="button"
+            >
+              <span className="companion-nav-mark">书</span>
+              <span><strong>《{activeBookTitle}》</strong><small>当前书房</small></span>
+            </button>
+            <button
+              className={mode === "general_companion" ? "active" : ""}
+              onClick={() => mode === "general_companion" ? composerRef.current?.focus() : switchMode("general_companion")}
+              type="button"
+            >
+              <span className="companion-nav-mark">谈</span>
+              <span><strong>广泛书友</strong><small>跨越书与生活</small></span>
+            </button>
+
+            <p className="companion-nav-label">我的阅读</p>
+            <button onClick={() => setShowLocalSetup(true)} type="button">
+              <span className="companion-nav-mark">藏</span>
+              <span><strong>私人书库</strong><small>{libraryBooks.length} 本书</small></span>
+            </button>
+            <button onClick={() => setShowImportCenter(true)} type="button">
+              <span className="companion-nav-mark">入</span>
+              <span><strong>导入阅读</strong><small>{documents.length} 份本地资料</small></span>
+            </button>
+            <button onClick={() => setShowRelationship(true)} type="button">
+              <span className="companion-nav-mark">忆</span>
+              <span><strong>对话与记忆</strong><small>{memories.filter((memory) => memory.status === "confirmed").length} 条由你确认</small></span>
+            </button>
+          </nav>
+
+          <div className="companion-panel-footer">
+            <p className="local-trust"><i />本地保存，只记住你确认的事</p>
+            <button className="preferences-entry" onClick={() => setShowPreferences(true)} type="button">
+              <span className="preferences-entry-mark">设</span>
+              <span><strong>偏好与模型</strong><small>{readerProfile.display_name ? `${readerProfile.display_name} · 个人设置` : "称呼、模型与隐私边界"}</small></span>
+              <b>›</b>
+            </button>
+          </div>
         </aside>
 
-        <section className="conversation-panel reveal reveal-three">
+        <section className={`conversation-panel reveal reveal-three ${messages.length <= 1 ? "conversation-empty" : "conversation-active"}`}>
           <div className="book-heading">
             <div>
               <p className="overline">{mode === "book_room" ? "此刻共同谈论" : "开放书友空间"}</p>
@@ -1780,111 +1808,109 @@ export default function Home() {
             </div>
           </div>
 
-          <div className={`conversation-stream ${messages.length <= 1 ? "conversation-welcome" : ""}`} aria-live="polite" ref={conversationStreamRef}>
-            {messages.map((message) => (
-              <article className={`message message-${message.role}`} key={message.id}>
-                <div className="message-meta">
-                  <span>{message.role === "companion" ? "泊舟" : readerProfile.display_name || "你"}</span>
-                  {message.move && <em>{message.move}</em>}
-                </div>
-                <MarkdownMessage content={message.text} />
-                {message.systemNote && <p className="system-note">{message.systemNote}</p>}
-                {message.errorAction && (
-                  <button
-                    className="message-recovery-action"
-                    onClick={() => {
-                      if (message.errorAction === "settings") setShowPreferences(true);
-                      else void sendMessage(message.retryText ?? "");
-                    }}
-                    type="button"
-                  >
-                    {message.errorAction === "settings" ? "检查书友模型" : "重新发送"}
-                  </button>
-                )}
-                {message.role === "companion" && message.memoryId && message.memoryText && (
-                  <div className="memory-candidate">
-                    <span>是否记住：{message.memoryText}</span>
-                    <button onClick={() => confirmMemory({
-                      id: message.memoryId!, conversation_id: conversationId ?? "", scope: mode === "book_room" ? "book" : "global", book_title: activeBookTitle, content: message.memoryText!, status: "pending", created_at: "",
-                    })} type="button">记住</button>
-                    <button onClick={() => removeMemory({
-                      id: message.memoryId!, conversation_id: conversationId ?? "", scope: mode === "book_room" ? "book" : "global", book_title: activeBookTitle, content: message.memoryText!, status: "pending", created_at: "",
-                    })} type="button">先不记</button>
+          <div className="conversation-body">
+            <div className={`conversation-stream ${messages.length <= 1 ? "conversation-welcome" : ""}`} aria-live="polite" ref={conversationStreamRef}>
+              {messages.map((message) => (
+                <article className={`message message-${message.role}`} key={message.id}>
+                  <div className="message-meta">
+                    <span>{message.role === "companion" ? "泊舟" : readerProfile.display_name || "你"}</span>
+                    {message.move && <em>{message.move}</em>}
                   </div>
-                )}
-                {message.role === "companion" && message.id !== "welcome" && (
-                  <div className="message-feedback">
-                    {(Object.keys(feedbackLabels) as MessageFeedback[]).map((feedback) => (
-                      <button
-                        aria-pressed={feedbackByMessage[message.id] === feedback}
-                        className={feedbackByMessage[message.id] === feedback ? "active" : ""}
-                        key={feedback}
-                        onClick={() => recordFeedback(message.id, feedback)}
-                        type="button"
-                      >
-                        {feedbackLabels[feedback]}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </article>
-            ))}
-            {pending && (
-              <div className="thinking"><i /><i /><i /><span>泊舟正在想怎样接住这句话</span></div>
-            )}
-          </div>
+                  <MarkdownMessage content={message.text} />
+                  {message.systemNote && <p className="system-note">{message.systemNote}</p>}
+                  {message.errorAction && (
+                    <button
+                      className="message-recovery-action"
+                      onClick={() => {
+                        if (message.errorAction === "settings") setShowPreferences(true);
+                        else void sendMessage(message.retryText ?? "");
+                      }}
+                      type="button"
+                    >
+                      {message.errorAction === "settings" ? "检查书友模型" : "重新发送"}
+                    </button>
+                  )}
+                  {message.role === "companion" && message.memoryId && message.memoryText && (
+                    <div className="memory-candidate">
+                      <span>是否记住：{message.memoryText}</span>
+                      <button onClick={() => confirmMemory({
+                        id: message.memoryId!, conversation_id: conversationId ?? "", scope: mode === "book_room" ? "book" : "global", book_title: activeBookTitle, content: message.memoryText!, status: "pending", created_at: "",
+                      })} type="button">记住</button>
+                      <button onClick={() => removeMemory({
+                        id: message.memoryId!, conversation_id: conversationId ?? "", scope: mode === "book_room" ? "book" : "global", book_title: activeBookTitle, content: message.memoryText!, status: "pending", created_at: "",
+                      })} type="button">先不记</button>
+                    </div>
+                  )}
+                  {message.role === "companion" && message.id !== "welcome" && (
+                    <div className="message-feedback">
+                      {(Object.keys(feedbackLabels) as MessageFeedback[]).map((feedback) => (
+                        <button
+                          aria-pressed={feedbackByMessage[message.id] === feedback}
+                          className={feedbackByMessage[message.id] === feedback ? "active" : ""}
+                          key={feedback}
+                          onClick={() => recordFeedback(message.id, feedback)}
+                          type="button"
+                        >
+                          {feedbackLabels[feedback]}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </article>
+              ))}
+              {pending && (
+                <div className="thinking"><i /><i /><i /><span>泊舟正在想怎样接住这句话</span></div>
+              )}
+            </div>
 
-          <div className="composer-wrap">
-            <form className="composer" onSubmit={submitMessage}>
-              <div className="composer-context">
-                <div className="composer-room"><span>{mode === "book_room" ? "当前书房" : "全局书友"}</span><strong>{mode === "book_room" ? `《${activeBookTitle}》` : "不绑定书籍"}</strong></div>
-                <button className="composer-context-action" onClick={() => mode === "book_room" ? setShowLocalSetup(true) : setShowImportCenter(true)} type="button">{mode === "book_room" ? "切换书房" : "选择一本书"}</button>
-              </div>
-              <textarea
-                aria-label="说说你读完后的想法"
-                maxLength={4000}
-                onChange={(event) => setInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
-                    event.preventDefault();
-                    event.currentTarget.form?.requestSubmit();
-                  }
-                }}
-                placeholder={mode === "book_room" ? "不必整理好。说说那句还留在心里的话……" : "从一个困惑、判断，或最近挥之不去的念头开始……"}
-                ref={composerRef}
-                rows={1}
-                value={input}
-              />
-              <div className="composer-footer">
-                <div className="composer-tools">
-                  <div className="direction-tabs" aria-label="选择谈话方向">
-                    {directionOptions.map((option) => (
-                      <button
-                        className={direction === option.id ? "active" : ""}
-                        key={option.id}
-                        onClick={() => setDirection(option.id)}
-                        type="button"
-                        title={option.note}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
+            <div className="composer-wrap">
+              <form className="composer" onSubmit={submitMessage}>
+                <textarea
+                  aria-label="说说你读完后的想法"
+                  maxLength={4000}
+                  onChange={(event) => setInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      event.currentTarget.form?.requestSubmit();
+                    }
+                  }}
+                  placeholder={mode === "book_room" ? "不必整理好。说说那句还留在心里的话……" : "从一个困惑、判断，或最近挥之不去的念头开始……"}
+                  ref={composerRef}
+                  rows={1}
+                  value={input}
+                />
+                <div className="composer-footer">
+                  <div className="composer-tools">
+                    <div className="direction-tabs" aria-label="选择谈话方向">
+                      {directionOptions.map((option) => (
+                        <button
+                          className={direction === option.id ? "active" : ""}
+                          key={option.id}
+                          onClick={() => setDirection(option.id)}
+                          type="button"
+                          title={option.note}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                    <label className="chat-model-selector">
+                      <span>模型</span>
+                      <select aria-label="选择本轮聊天模型" onChange={(event) => setSelectedModelProfileId(event.target.value || null)} value={selectedModelProfileId ?? ""}>
+                        <option value="">{modelSettings.model ? modelNameForDisplay(modelSettings.model) : "暂未选择模型"}</option>
+                        {modelProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profileNameForDisplay(profile)}{profile.is_default ? "（默认）" : ""}</option>)}
+                      </select>
+                      <button onClick={() => setShowPreferences(true)} type="button">管理</button>
+                    </label>
                   </div>
-                  <label className="chat-model-selector">
-                    <span>模型</span>
-                    <select aria-label="选择本轮聊天模型" onChange={(event) => setSelectedModelProfileId(event.target.value || null)} value={selectedModelProfileId ?? ""}>
-                      <option value="">{modelSettings.model ? modelNameForDisplay(modelSettings.model) : "暂未选择模型"}</option>
-                      {modelProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profileNameForDisplay(profile)}{profile.is_default ? "（默认）" : ""}</option>)}
-                    </select>
-                    <button onClick={() => setShowPreferences(true)} type="button">管理</button>
-                  </label>
+                  <button disabled={!input.trim() || pending} type="submit">
+                    {pending ? "正在回应" : "交给泊舟"}<b>↗</b>
+                  </button>
                 </div>
-                <button disabled={!input.trim() || pending} type="submit">
-                  {pending ? "正在回应" : "交给泊舟"}<b>↗</b>
-                </button>
-              </div>
-            </form>
-            {composerNotice && <p className="composer-notice" aria-live="polite">{composerNotice}</p>}
+              </form>
+              {composerNotice && <p className="composer-notice" aria-live="polite">{composerNotice}</p>}
+            </div>
           </div>
         </section>
 
