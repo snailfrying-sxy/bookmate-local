@@ -399,6 +399,52 @@ def test_book_room_chat_retrieves_documents_attached_to_the_selected_book(monkey
         request("DELETE", f"/v1/library/books/{book_id}")
 
 
+def test_empty_book_room_model_prompt_discloses_absent_local_evidence(monkeypatch: object) -> None:
+    from app import companion
+
+    captured: list[dict[str, str]] = []
+
+    async def fake_generate(messages: list[dict[str, str]], *_: object) -> tuple[str, str]:
+        captured.extend(messages)
+        return ('{"reply":"可以先从你的好奇开始。","follow_up":"是什么让你想走进这本书？"}', "test-model")
+
+    monkeypatch.setattr(companion, "generate_text", fake_generate)
+    created = request("POST", "/v1/library/books", json={"title": "没有版本的新书房"})
+    assert created.status_code == 201
+    book_id = created.json()["id"]
+
+    try:
+        configured = request(
+            "PATCH",
+            "/v1/settings/model",
+            json={"base_url": "https://example.invalid/v1", "model": "test-model"},
+        )
+        assert configured.status_code == 200
+        chat = request(
+            "POST",
+            "/v1/chat",
+            json={
+                "message": "我想知道它是否适合现在的我。",
+                "mode": "book_room",
+                "book_id": None,
+                "book_title": "没有版本的新书房",
+                "library_book_id": book_id,
+            },
+        )
+        assert chat.status_code == 200
+        assert chat.json()["citations"] == []
+        system_prompt = next(message["content"] for message in captured if message["role"] == "system")
+        assert "当前书房尚无本地版本或阅读笔记" in system_prompt
+        assert "不得声称读过用户的版本" in system_prompt
+    finally:
+        request(
+            "PATCH",
+            "/v1/settings/model",
+            json={"base_url": "", "model": "", "clear_api_key": True},
+        )
+        request("DELETE", f"/v1/library/books/{book_id}")
+
+
 def test_existing_document_can_be_archived_to_and_detached_from_a_library_book() -> None:
     created = request(
         "POST",

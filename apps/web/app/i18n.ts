@@ -294,12 +294,14 @@ const pageTranslations = {
     "ui.close": "收起",
     "ui.notARankingBookmateLeavesOne": "不是榜单。泊舟从延续、反面与跨越三个方向，各留下一本。",
     "ui.whyItMayNotFit": "为什么可能不适合",
-    "ui.enterWithAQuestion": "带着一个问题进入",
+    "ui.enterWithAQuestion": "建立书房，先聊聊",
     "ui.returnToTheFirstThreePaths": "回到原来的三种邀请",
     "ui.showMeSomethingEntirelyDifferent": "给我完全不同的东西",
     "ui.recommendationsDoNotUsePricesOr": "推荐排序不读取价格或佣金。",
     "ui.openingBookRoom": "正在进入《{value0}》的书房……",
-    "ui.recommendationBookRoomReady": "已进入《{value0}》的书房，并带入一个切入问题。你可以改写后再交给泊舟。",
+    "ui.recommendationBookRoomReady": "已打开《{value0}》的书房，并带入一个切入问题。你可以改写后再交给泊舟。",
+    "ui.newRecommendationBookRoomWelcome": "这是一间刚建立的书房。还没有你的本地版本，我们可以先聊你为什么对它好奇、准备怎样读，或它是否适合你。等你导入版本、摘录或感想后，我会再按本地资料取证。",
+    "ui.noLocalEditionYetBeginWithWhatDrawsYou": "暂未导入本地资料 · 可先聊读前期待",
     "ui.couldNotOpenRecommendationBookRoom": "暂时无法打开这本书的书房，请稍后重试。"
   },
   "en": {
@@ -593,12 +595,14 @@ const pageTranslations = {
     "ui.close": "Close",
     "ui.notARankingBookmateLeavesOne": "Not a ranking. BookMate leaves one book along each of three paths: continuation, counterpoint, and crossing over.",
     "ui.whyItMayNotFit": "Why it may not fit",
-    "ui.enterWithAQuestion": "Enter with a question",
+    "ui.enterWithAQuestion": "Open a book room",
     "ui.returnToTheFirstThreePaths": "Return to the first three paths",
     "ui.showMeSomethingEntirelyDifferent": "Show me something entirely different",
     "ui.recommendationsDoNotUsePricesOr": "Recommendations do not use prices or commissions.",
     "ui.openingBookRoom": "Opening the book room for {value0}...",
-    "ui.recommendationBookRoomReady": "You are now in {value0}'s book room, with a starting question ready to edit and send.",
+    "ui.recommendationBookRoomReady": "The book room for {value0} is open, with a starting question ready to edit and send.",
+    "ui.newRecommendationBookRoomWelcome": "This is a newly opened book room. You have not added a local edition yet, so we can begin with why the book draws you, how you want to read it, or whether it may fit you. Once you add an edition, quote, or reflection, I can ground the conversation in your local sources.",
+    "ui.noLocalEditionYetBeginWithWhatDrawsYou": "No local edition yet · begin with what draws you",
     "ui.couldNotOpenRecommendationBookRoom": "This book room could not be opened. Please try again."
   }
 } as const;

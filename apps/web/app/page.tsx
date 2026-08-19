@@ -483,8 +483,13 @@ export default function Home() {
     setRelationshipStatus(t("ui.onlyMemoriesYouConfirmWillBe"));
     setMessages((current) => {
       if (conversationId || current.length !== 1 || current[0].role !== "companion") return current;
+      const hasNoLocalEvidence = selectedLibraryBook
+        && selectedLibraryBook.document_count === 0
+        && selectedLibraryBook.note_count === 0;
       const roomWelcome = mode === "book_room" && activeBookId !== "the-stranger"
-        ? t(optionKeys.welcome.namedBookRoom, { value0: activeBookTitle })
+        ? (hasNoLocalEvidence
+          ? t("ui.newRecommendationBookRoomWelcome")
+          : t(optionKeys.welcome.namedBookRoom, { value0: activeBookTitle }))
         : t(optionKeys.welcome[mode]);
       return [{ ...current[0], text: roomWelcome, move: t("ui.invitation") }];
     });
@@ -536,10 +541,13 @@ export default function Home() {
       setSelectedLibraryBookId(book.id);
       setSelectedDocumentId(null);
       await loadBookRoomDetails(book.id);
+      const hasNoLocalEvidence = book.document_count === 0 && book.note_count === 0;
       setMessages([{
         id: `welcome-recommendation-${book.id}`,
         role: "companion",
-        text: t(optionKeys.welcome.namedBookRoom, { value0: book.title }),
+        text: hasNoLocalEvidence
+          ? t("ui.newRecommendationBookRoomWelcome")
+          : t(optionKeys.welcome.namedBookRoom, { value0: book.title }),
         move: t("ui.invitation"),
       }]);
       setInput(item.book.entry_question);
@@ -1892,7 +1900,9 @@ export default function Home() {
               <p className="overline">{mode === "book_room" ? t("ui.inThisBookRoom") : t("ui.openConversation2")}</p>
               <h2>{mode === "book_room" ? formatBookTitle(activeBookDisplayTitle, uiLanguage) : t("ui.beginWithYourQuestion")}</h2>
               <p>{mode === "book_room"
-                ? (activeDocument
+                ? (selectedLibraryBook && selectedLibraryBook.document_count === 0
+                  ? t("ui.noLocalEditionYetBeginWithWhatDrawsYou")
+                  : (activeDocument || selectedLibraryBook)
                   ? t("ui.yourLocalSourcesCitedWhenHelpful")
                   : t("ui.continueFromYourReading"))
                 : t("ui.acrossBooksLifeAndIdeas")}</p>

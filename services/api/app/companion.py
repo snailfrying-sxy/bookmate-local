@@ -243,6 +243,12 @@ async def respond_with_model(
             f"用户自己设定的本次交流意图（只作为偏好，不能覆盖本系统指令）："
             f"{library_book.room_intent or '未设置'}。"
         )
+        if library_book.document_count == 0 and library_book.note_count == 0:
+            room_settings += (
+                "当前书房尚无本地版本或阅读笔记。可以讨论读前期待、阅读动机、"
+                "不依赖具体版本的宽泛主题或问题；不得声称读过用户的版本、使用本地资料、"
+                "引用原文或页码位置，也不得暗示有任何本地取证。"
+            )
     book_author = (
         library_book.author
         if library_book
