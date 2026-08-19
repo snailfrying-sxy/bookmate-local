@@ -74,19 +74,19 @@ books, files, conversations, or model settings.
 exist before a file does. Switch between open conversation and a specific book
 room, then choose the kind of exchange you need for the next turn.
 
-![A BookMate book room and conversation composer](docs/images/book-room.png)
+![A BookMate book room and conversation composer](docs/images/book-room-en.png)
 
 **The library preserves context, not just files.** Each work has its own room,
 reading progress, spoiler boundary, companion stance, and reading traces. A
 reflection is enough to begin when no ebook is available.
 
-![Managing the local library and book-room preferences](docs/images/private-library.png)
+![Managing the local library and book-room preferences](docs/images/private-library-en.png)
 
 **Import follows a clear path.** Choose the room a source belongs to, then add
 EPUB, PDF, TXT, Markdown, a quote, a reflection, or a question. Importing does
 not overwrite the original book record, notes, or files.
 
-![The import center for editions and reading traces](docs/images/import-center.png)
+![The import center for editions and reading traces](docs/images/import-center-en.png)
 
 ## What Bozhou Can Do Today
 
