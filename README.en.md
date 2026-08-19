@@ -65,6 +65,29 @@ conversations, and confirmed memories stay local by default. If the reader
 chooses a remote model, BookMate discloses which relevant context may leave the
 device.
 
+## See It In Use
+
+These screenshots use an isolated demo library. They contain no reader's real
+books, files, conversations, or model settings.
+
+**A book room starts with the thought that is still unfinished.** A room can
+exist before a file does. Switch between open conversation and a specific book
+room, then choose the kind of exchange you need for the next turn.
+
+![A BookMate book room and conversation composer](docs/images/book-room.png)
+
+**The library preserves context, not just files.** Each work has its own room,
+reading progress, spoiler boundary, companion stance, and reading traces. A
+reflection is enough to begin when no ebook is available.
+
+![Managing the local library and book-room preferences](docs/images/private-library.png)
+
+**Import follows a clear path.** Choose the room a source belongs to, then add
+EPUB, PDF, TXT, Markdown, a quote, a reflection, or a question. Importing does
+not overwrite the original book record, notes, or files.
+
+![The import center for editions and reading traces](docs/images/import-center.png)
+
 ## What Bozhou Can Do Today
 
 - Keeps a stable book room separate from uploaded editions and supporting files.
