@@ -499,12 +499,57 @@ export default function Home() {
     if (composerRef.current) fitComposer(composerRef.current);
   }, [input]);
 
-  function startRecommendationConversation(item: Recommendation) {
+  async function openRecommendationBookRoom(item: Recommendation) {
     setShowRecommendations(false);
-    switchMode("general_companion");
-    setInput(item.book.entry_question);
-    setComposerNotice(t("ui.aStartingQuestionFromIsReady", { value0: item.book.title }));
-    focusComposer();
+    setSetupPending(true);
+    setSetupStatus(t("ui.openingBookRoom", { value0: item.book.title }));
+
+    try {
+      const recommendationTag = `recommendation:${item.book.id}`;
+      let book = libraryBooks.find((candidate) => (
+        candidate.tags.includes(recommendationTag)
+        || (candidate.title.trim().toLocaleLowerCase() === item.book.title.trim().toLocaleLowerCase()
+          && (candidate.author ?? "").trim().toLocaleLowerCase() === item.book.author.trim().toLocaleLowerCase())
+      ));
+
+      if (!book) {
+        const response = await fetch(`${API_BASE}/v1/library/books`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: item.book.title,
+            author: item.book.author,
+            language: uiLanguage === "zh" ? "zh" : "en",
+            reading_status: "want_to_read",
+            tags: [recommendationTag],
+          }),
+        });
+        if (!response.ok) throw new Error("Could not create recommendation book room");
+        book = await response.json() as LibraryBook;
+        setLibraryBooks((current) => [book!, ...current]);
+      }
+
+      setMode("book_room");
+      setConversationId(null);
+      setActiveBookId(null);
+      setActiveBookTitle(book.title);
+      setSelectedLibraryBookId(book.id);
+      setSelectedDocumentId(null);
+      await loadBookRoomDetails(book.id);
+      setMessages([{
+        id: `welcome-recommendation-${book.id}`,
+        role: "companion",
+        text: t(optionKeys.welcome.namedBookRoom, { value0: book.title }),
+        move: t("ui.invitation"),
+      }]);
+      setInput(item.book.entry_question);
+      setComposerNotice(t("ui.recommendationBookRoomReady", { value0: book.title }));
+      focusComposer();
+    } catch {
+      setComposerNotice(t("ui.couldNotOpenRecommendationBookRoom"));
+    } finally {
+      setSetupPending(false);
+    }
   }
 
   function changeRecommendationDirection() {
@@ -2010,7 +2055,7 @@ export default function Home() {
                   <summary>{t("ui.whyItMayNotFit")}</summary>
                   <p>{item.book.caution}</p>
                 </details>
-                <button onClick={() => startRecommendationConversation(item)} type="button">
+                <button disabled={setupPending} onClick={() => void openRecommendationBookRoom(item)} type="button">
                   {t("ui.enterWithAQuestion")} <span>↗</span>
                 </button>
               </article>

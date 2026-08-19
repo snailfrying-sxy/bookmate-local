@@ -335,6 +335,70 @@ def test_local_text_document_can_be_uploaded_searched_and_deleted() -> None:
         assert deleted.status_code == 204
 
 
+def test_book_room_chat_retrieves_documents_attached_to_the_selected_book(monkeypatch: object) -> None:
+    from app import companion
+
+    captured: list[dict[str, str]] = []
+
+    async def fake_generate(messages: list[dict[str, str]], *_: object) -> tuple[str, str]:
+        captured.extend(messages)
+        return ('{"reply":"我会先从你保存的资料继续。","follow_up":"哪一点最让你停住？"}', "test-model")
+
+    monkeypatch.setattr(companion, "generate_text", fake_generate)
+    created = request("POST", "/v1/library/books", json={"title": "带版本的书房"})
+    assert created.status_code == 201
+    book_id = created.json()["id"]
+    document_id = ""
+
+    try:
+        upload = request(
+            "POST",
+            "/v1/knowledge/documents",
+            data={"book_id": book_id},
+            files={
+                "file": (
+                    "书房版本.txt",
+                    "伊丽莎白重新阅读那封信，开始怀疑自己的判断。",
+                    "text/plain",
+                )
+            },
+        )
+        assert upload.status_code == 201
+        document_id = upload.json()["id"]
+
+        configured = request(
+            "PATCH",
+            "/v1/settings/model",
+            json={"base_url": "https://example.invalid/v1", "model": "test-model"},
+        )
+        assert configured.status_code == 200
+        chat = request(
+            "POST",
+            "/v1/chat",
+            json={
+                "message": "她为什么开始怀疑自己的判断？",
+                "mode": "book_room",
+                "book_id": None,
+                "book_title": "带版本的书房",
+                "library_book_id": book_id,
+            },
+        )
+        assert chat.status_code == 200
+        assert chat.json()["citations"][0]["source_type"] == "local_document"
+        assert chat.json()["citations"][0]["label"] == "书房版本.txt"
+        system_prompt = next(message["content"] for message in captured if message["role"] == "system")
+        assert "伊丽莎白重新阅读那封信" in system_prompt
+    finally:
+        request(
+            "PATCH",
+            "/v1/settings/model",
+            json={"base_url": "", "model": "", "clear_api_key": True},
+        )
+        if document_id:
+            request("DELETE", f"/v1/knowledge/documents/{document_id}")
+        request("DELETE", f"/v1/library/books/{book_id}")
+
+
 def test_existing_document_can_be_archived_to_and_detached_from_a_library_book() -> None:
     created = request(
         "POST",

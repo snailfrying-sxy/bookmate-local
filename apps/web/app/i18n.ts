@@ -297,7 +297,10 @@ const pageTranslations = {
     "ui.enterWithAQuestion": "带着一个问题进入",
     "ui.returnToTheFirstThreePaths": "回到原来的三种邀请",
     "ui.showMeSomethingEntirelyDifferent": "给我完全不同的东西",
-    "ui.recommendationsDoNotUsePricesOr": "推荐排序不读取价格或佣金。"
+    "ui.recommendationsDoNotUsePricesOr": "推荐排序不读取价格或佣金。",
+    "ui.openingBookRoom": "正在进入《{value0}》的书房……",
+    "ui.recommendationBookRoomReady": "已进入《{value0}》的书房，并带入一个切入问题。你可以改写后再交给泊舟。",
+    "ui.couldNotOpenRecommendationBookRoom": "暂时无法打开这本书的书房，请稍后重试。"
   },
   "en": {
     "ui.theStranger": "The Stranger",
@@ -593,7 +596,10 @@ const pageTranslations = {
     "ui.enterWithAQuestion": "Enter with a question",
     "ui.returnToTheFirstThreePaths": "Return to the first three paths",
     "ui.showMeSomethingEntirelyDifferent": "Show me something entirely different",
-    "ui.recommendationsDoNotUsePricesOr": "Recommendations do not use prices or commissions."
+    "ui.recommendationsDoNotUsePricesOr": "Recommendations do not use prices or commissions.",
+    "ui.openingBookRoom": "Opening the book room for {value0}...",
+    "ui.recommendationBookRoomReady": "You are now in {value0}'s book room, with a starting question ready to edit and send.",
+    "ui.couldNotOpenRecommendationBookRoom": "This book room could not be opened. Please try again."
   }
 } as const;
 

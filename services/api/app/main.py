@@ -338,7 +338,7 @@ def remove_reading_note(book_id: str, note_id: str) -> Response:
 @app.post("/v1/knowledge/search", response_model=KnowledgeSearchResponse)
 def search_knowledge(request: KnowledgeSearchRequest) -> KnowledgeSearchResponse:
     return KnowledgeSearchResponse(
-        items=search_chunks(request.query, request.document_id, request.limit)
+        items=search_chunks(request.query, request.document_id, request.book_id, request.limit)
     )
 
 
@@ -416,8 +416,13 @@ async def chat(request: ChatRequest) -> ChatResponse:
         )
         if settings.base_url and settings.model:
             passages = (
-                search_chunks(request.message, request.knowledge_document_id, limit=4)
-                if request.knowledge_document_id
+                search_chunks(
+                    request.message,
+                    request.knowledge_document_id,
+                    request.library_book_id,
+                    limit=4,
+                )
+                if request.knowledge_document_id or request.library_book_id
                 else []
             )
             notes = (

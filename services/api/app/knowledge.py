@@ -278,7 +278,12 @@ def _query_terms(query: str) -> set[str]:
     return {term for term in terms if term}
 
 
-def search_chunks(query: str, document_id: str | None = None, limit: int = 5) -> list[dict[str, object]]:
+def search_chunks(
+    query: str,
+    document_id: str | None = None,
+    book_id: str | None = None,
+    limit: int = 5,
+) -> list[dict[str, object]]:
     sql = """
         SELECT c.id, c.document_id, c.ordinal, c.locator, c.text, d.name AS document_name
         FROM chunks c JOIN documents d ON d.id = c.document_id
@@ -288,6 +293,9 @@ def search_chunks(query: str, document_id: str | None = None, limit: int = 5) ->
     if document_id:
         sql += " AND c.document_id = ?"
         parameters.append(document_id)
+    if book_id:
+        sql += " AND d.book_id = ?"
+        parameters.append(book_id)
     sql += " LIMIT 10000"
     with connect() as connection:
         rows = connection.execute(sql, parameters).fetchall()
