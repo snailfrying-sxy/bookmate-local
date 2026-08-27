@@ -101,6 +101,11 @@ type LibraryBook = {
   spoiler_policy: SpoilerPolicy;
   companion_stance: CompanionStance;
   room_intent: string | null;
+  room_role_name: string | null;
+  room_role_focus: string | null;
+  room_role_principles: string[];
+  room_role_moves: string[];
+  room_role_avoidances: string[];
   tags: string[];
   document_count: number;
   note_count: number;
@@ -159,6 +164,14 @@ function translateLabelMap<T extends string>(language: UiLanguage, keys: Record<
 
 function formatBookTitle(title: string, language: UiLanguage) {
   return language === "zh" ? `《${title}》` : title;
+}
+
+function roomRoleItems(value: FormDataEntryValue | null): string[] {
+  return String(value ?? "")
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 6);
 }
 
 function modelNameForDisplay(model: string, language: UiLanguage = "zh") {
@@ -752,6 +765,11 @@ export default function Home() {
           spoiler_policy: form.get("spoiler_policy"),
           companion_stance: form.get("companion_stance"),
           room_intent: String(form.get("room_intent") ?? "").trim() || null,
+          room_role_name: String(form.get("room_role_name") ?? "").trim() || null,
+          room_role_focus: String(form.get("room_role_focus") ?? "").trim() || null,
+          room_role_principles: roomRoleItems(form.get("room_role_principles")),
+          room_role_moves: roomRoleItems(form.get("room_role_moves")),
+          room_role_avoidances: roomRoleItems(form.get("room_role_avoidances")),
         }),
       });
       if (!response.ok) throw new Error(await response.text());
@@ -1772,6 +1790,19 @@ export default function Home() {
                   <label><span>{t("ui.spoilerBoundary")}</span><select defaultValue={selectedLibraryBook.spoiler_policy} name="spoiler_policy">{(Object.keys(spoilerPolicyLabels) as SpoilerPolicy[]).map((policy) => <option key={policy} value={policy}>{spoilerPolicyLabels[policy]}</option>)}</select></label>
                   <label><span>{t("ui.companionStance")}</span><select defaultValue={selectedLibraryBook.companion_stance} name="companion_stance">{(Object.keys(companionStanceLabels) as CompanionStance[]).map((stance) => <option key={stance} value={stance}>{companionStanceLabels[stance]}</option>)}</select></label>
                   <label className="book-room-intent"><span>{t("ui.whatDoYouWantFromThis")}</span><textarea defaultValue={selectedLibraryBook.room_intent ?? ""} name="room_intent" placeholder={t("ui.forExampleDoNotRushTo")} /></label>
+                  <section className="room-role-builder">
+                    <div className="room-role-heading">
+                      <div><h4>{t("ui.roomRoleCard")}</h4><p>{t("ui.roomRoleCardDescription")}</p></div>
+                      <small>{t("ui.roomRoleCardBoundary")}</small>
+                    </div>
+                    <div className="room-role-fields">
+                      <label><span>{t("ui.roomRoleName")}</span><input defaultValue={selectedLibraryBook.room_role_name ?? ""} name="room_role_name" placeholder={t("ui.roomRoleNamePlaceholder")} /></label>
+                      <label><span>{t("ui.roomRoleFocus")}</span><input defaultValue={selectedLibraryBook.room_role_focus ?? ""} name="room_role_focus" placeholder={t("ui.roomRoleFocusPlaceholder")} /></label>
+                      <label><span>{t("ui.roomRolePrinciples")}</span><textarea defaultValue={selectedLibraryBook.room_role_principles.join("\n")} name="room_role_principles" placeholder={t("ui.roomRolePrinciplesPlaceholder")} /></label>
+                      <label><span>{t("ui.roomRoleMoves")}</span><textarea defaultValue={selectedLibraryBook.room_role_moves.join("\n")} name="room_role_moves" placeholder={t("ui.roomRoleMovesPlaceholder")} /></label>
+                      <label className="room-role-wide"><span>{t("ui.roomRoleAvoidances")}</span><textarea defaultValue={selectedLibraryBook.room_role_avoidances.join("\n")} name="room_role_avoidances" placeholder={t("ui.roomRoleAvoidancesPlaceholder")} /></label>
+                    </div>
+                  </section>
                   <button disabled={setupPending} type="submit">{t("ui.saveRoomPreferences")}</button>
                 </form>
               )}

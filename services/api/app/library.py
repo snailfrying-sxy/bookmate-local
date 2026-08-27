@@ -30,6 +30,26 @@ def _tags(values: list[str]) -> list[str]:
     return normalized[:20]
 
 
+def _role_items(values: list[str]) -> list[str]:
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        item = " ".join(value.split())[:240]
+        key = item.casefold()
+        if item and key not in seen:
+            normalized.append(item)
+            seen.add(key)
+    return normalized[:6]
+
+
+def _role_items_from_row(row: sqlite3.Row, column: str) -> list[str]:
+    try:
+        value = json.loads(row[column] or "[]")
+    except (json.JSONDecodeError, TypeError):
+        return []
+    return _role_items(value) if isinstance(value, list) and all(isinstance(item, str) for item in value) else []
+
+
 def _document(row: sqlite3.Row) -> dict[str, object]:
     return {
         "id": row["id"],
@@ -58,6 +78,11 @@ def _book(row: sqlite3.Row) -> LibraryBook:
         spoiler_policy=row["spoiler_policy"],
         companion_stance=row["companion_stance"],
         room_intent=row["room_intent"],
+        room_role_name=row["room_role_name"],
+        room_role_focus=row["room_role_focus"],
+        room_role_principles=_role_items_from_row(row, "room_role_principles_json"),
+        room_role_moves=_role_items_from_row(row, "room_role_moves_json"),
+        room_role_avoidances=_role_items_from_row(row, "room_role_avoidances_json"),
         tags=json.loads(row["tags_json"]),
         document_count=row["document_count"],
         note_count=row["note_count"],
@@ -83,8 +108,9 @@ def create_book(payload: LibraryBookCreate) -> LibraryBook:
             """
             INSERT INTO library_books(
                 title, id, author, language, description, reading_status, isbn, reading_progress,
-                spoiler_policy, companion_stance, room_intent, tags_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                spoiler_policy, companion_stance, room_intent, room_role_name, room_role_focus,
+                room_role_principles_json, room_role_moves_json, room_role_avoidances_json, tags_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 payload.title.strip(),
@@ -98,6 +124,11 @@ def create_book(payload: LibraryBookCreate) -> LibraryBook:
                 payload.spoiler_policy.value,
                 payload.companion_stance.value,
                 payload.room_intent.strip() if payload.room_intent else None,
+                payload.room_role_name.strip() if payload.room_role_name else None,
+                payload.room_role_focus.strip() if payload.room_role_focus else None,
+                json.dumps(_role_items(payload.room_role_principles), ensure_ascii=False),
+                json.dumps(_role_items(payload.room_role_moves), ensure_ascii=False),
+                json.dumps(_role_items(payload.room_role_avoidances), ensure_ascii=False),
                 json.dumps(_tags(payload.tags), ensure_ascii=False),
             ),
         )
@@ -154,13 +185,20 @@ def update_book(book_id: str, patch: LibraryBookPatch) -> LibraryBook:
     spoiler_policy = values.get("spoiler_policy", current.spoiler_policy)
     companion_stance = values.get("companion_stance", current.companion_stance)
     room_intent = values.get("room_intent", current.room_intent)
+    room_role_name = values.get("room_role_name", current.room_role_name)
+    room_role_focus = values.get("room_role_focus", current.room_role_focus)
+    room_role_principles = _role_items(values["room_role_principles"]) if "room_role_principles" in values else current.room_role_principles
+    room_role_moves = _role_items(values["room_role_moves"]) if "room_role_moves" in values else current.room_role_moves
+    room_role_avoidances = _role_items(values["room_role_avoidances"]) if "room_role_avoidances" in values else current.room_role_avoidances
     tags = _tags(values["tags"]) if "tags" in values else current.tags
     with connect() as connection:
         connection.execute(
             """
             UPDATE library_books
             SET title = ?, author = ?, language = ?, description = ?, reading_status = ?, isbn = ?,
-                reading_progress = ?, spoiler_policy = ?, companion_stance = ?, room_intent = ?, tags_json = ?,
+                reading_progress = ?, spoiler_policy = ?, companion_stance = ?, room_intent = ?,
+                room_role_name = ?, room_role_focus = ?, room_role_principles_json = ?,
+                room_role_moves_json = ?, room_role_avoidances_json = ?, tags_json = ?,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
             """,
@@ -175,6 +213,11 @@ def update_book(book_id: str, patch: LibraryBookPatch) -> LibraryBook:
                 spoiler_policy.value,
                 companion_stance.value,
                 room_intent.strip() if room_intent else None,
+                room_role_name.strip() if room_role_name else None,
+                room_role_focus.strip() if room_role_focus else None,
+                json.dumps(room_role_principles, ensure_ascii=False),
+                json.dumps(room_role_moves, ensure_ascii=False),
+                json.dumps(room_role_avoidances, ensure_ascii=False),
                 json.dumps(tags, ensure_ascii=False),
                 book_id,
             ),

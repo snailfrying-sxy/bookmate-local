@@ -95,6 +95,9 @@ not overwrite the original book record, notes, or files.
   spoiler boundaries even when no ebook is available.
 - Provides a separate import workspace for files and editions, reading traces,
   and creating a book room before a file is available.
+- Lets each book room keep an editable role card: a focus, working principles,
+  ways of moving a conversation forward, and anti-patterns. It is a discussion
+  lens, never an imitation of an author or character, and never a source.
 - Stores books, notes, conversations, memories, documents, and indexes locally
   in SQLite and a single data directory.
 - Supports OpenAI Chat Completions-compatible and Responses-style text APIs.
@@ -217,3 +220,11 @@ Commercial use is **not** granted by this repository. It requires separate
 written authorization from the copyright holder. See [NOTICE](NOTICE) and
 [CONTRIBUTING.md](CONTRIBUTING.md) for the accompanying notices and
 contribution terms.
+
+## Acknowledgements
+
+Thanks to [virgiliojr94/book-to-skill](https://github.com/virgiliojr94/book-to-skill)
+for the inspiration to distill long-form material into on-demand structure
+rather than repeatedly dumping it into context. BookMate's room role cards
+adapt that idea for reader conversations; they do not include or reuse that
+project's content or code.

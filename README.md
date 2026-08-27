@@ -146,6 +146,12 @@ API Key 不会通过设置 API 回显。网页保存的密钥位于本地 `data/
 
 这些内容会以“读者阅读痕迹”进入当前书房，而不是被当成模型已经核验过的完整原文。书房还会保存阅读进度、剧透边界和交流姿态（慢慢探索、认真较真、整理线索、准备读书会）。即使没有上传文件，也能开始长期对话；如果使用远程模型，相关阅读痕迹也可能被发送给该模型服务。
 
+### 让书房有一张角色卡
+
+书房角色卡把读者反复想回来的视角整理成“角色名、主要关注、工作原则、推进方式与避免什么”。它借鉴了 [book-to-skill](https://github.com/virgiliojr94/book-to-skill)“提取结构，而不是复述全文”的方法，但服务于一间书房的长期对话：角色只定义陪谈视角，不扮演作者或书中人物，也不能替代本地资料取证、剧透边界和泊舟的透明身份。
+
+可以在“本地书库 → 这本书，怎样陪你聊”中按行填写这些内容；每次真实聊天后都可以继续修改。完整的方法、示例与边界见 [书房角色卡构建方法](docs/书房角色卡构建方法.md)。
+
 首版没有强制 embedding。个人书库可以先依靠简单检索和模型长上下文；后续再按需增加 OpenAI-compatible embeddings、混合检索和 reranker。
 
 ## 对话与记忆
@@ -224,3 +230,7 @@ npm audit --omit=dev
 - [CONTRIBUTING.md](CONTRIBUTING.md)：贡献与开发边界；
 - [SECURITY.md](SECURITY.md)：凭据、私人读者数据和漏洞的处理方式；
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)、[GOVERNANCE.md](GOVERNANCE.md) 与 [AGENTS.md](AGENTS.md)：协作、维护与项目约定。
+
+## 致谢
+
+- 感谢 [virgiliojr94/book-to-skill](https://github.com/virgiliojr94/book-to-skill) 对“将长篇材料提炼为可按需调用的结构，而非重复堆入上下文”这一思路的启发。BookMate 的书房角色卡借鉴这一方法，但不包含或复用该项目的内容与代码。

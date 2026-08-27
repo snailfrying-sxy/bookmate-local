@@ -48,6 +48,11 @@ def initialize_storage() -> None:
                 spoiler_policy TEXT NOT NULL DEFAULT 'avoid',
                 companion_stance TEXT NOT NULL DEFAULT 'explore',
                 room_intent TEXT,
+                room_role_name TEXT,
+                room_role_focus TEXT,
+                room_role_principles_json TEXT NOT NULL DEFAULT '[]',
+                room_role_moves_json TEXT NOT NULL DEFAULT '[]',
+                room_role_avoidances_json TEXT NOT NULL DEFAULT '[]',
                 tags_json TEXT NOT NULL DEFAULT '[]',
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -137,6 +142,11 @@ def initialize_storage() -> None:
         _ensure_column(connection, "library_books", "spoiler_policy", "TEXT NOT NULL DEFAULT 'avoid'")
         _ensure_column(connection, "library_books", "companion_stance", "TEXT NOT NULL DEFAULT 'explore'")
         _ensure_column(connection, "library_books", "room_intent", "TEXT")
+        _ensure_column(connection, "library_books", "room_role_name", "TEXT")
+        _ensure_column(connection, "library_books", "room_role_focus", "TEXT")
+        _ensure_column(connection, "library_books", "room_role_principles_json", "TEXT NOT NULL DEFAULT '[]'")
+        _ensure_column(connection, "library_books", "room_role_moves_json", "TEXT NOT NULL DEFAULT '[]'")
+        _ensure_column(connection, "library_books", "room_role_avoidances_json", "TEXT NOT NULL DEFAULT '[]'")
         connection.execute("CREATE INDEX IF NOT EXISTS idx_documents_book_id ON documents(book_id)")
 
 

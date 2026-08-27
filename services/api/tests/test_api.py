@@ -632,6 +632,11 @@ def test_book_room_can_start_from_reader_notes_without_an_uploaded_ebook(monkeyp
             "spoiler_policy": "up_to_progress",
             "companion_stance": "challenge",
             "room_intent": "帮我准备一次不流于摘抄的读书会讨论。",
+            "room_role_name": "在矛盾处停留的提问者",
+            "room_role_focus": "责任与宽恕之间不肯被抹平的张力",
+            "room_role_principles": ["先准确复述", "再提出一个有依据的反问"],
+            "room_role_moves": ["从具体句子回到读者判断"],
+            "room_role_avoidances": ["不把人物动机简化成标签"],
         },
     )
     assert created.status_code == 201
@@ -654,6 +659,16 @@ def test_book_room_can_start_from_reader_notes_without_an_uploaded_ebook(monkeyp
         assert detail.status_code == 200
         assert detail.json()["note_count"] == 1
         assert detail.json()["notes"][0]["quote"] == "宽恕不是遗忘。"
+        assert detail.json()["room_role_name"] == "在矛盾处停留的提问者"
+        assert detail.json()["room_role_principles"] == ["先准确复述", "再提出一个有依据的反问"]
+
+        updated_role = request(
+            "PATCH",
+            f"/v1/library/books/{book_id}",
+            json={"room_role_moves": ["先问读者停在何处", "再追问判断从何而来"]},
+        )
+        assert updated_role.status_code == 200
+        assert updated_role.json()["room_role_moves"] == ["先问读者停在何处", "再追问判断从何而来"]
 
         exported = request("GET", "/v1/export")
         assert exported.status_code == 200
@@ -685,6 +700,9 @@ def test_book_room_can_start_from_reader_notes_without_an_uploaded_ebook(monkeyp
         assert "读到第三章" in system_prompt
         assert "只能讨论用户声明已读进度以内" in system_prompt
         assert "宽恕不是遗忘" in system_prompt
+        assert "角色卡只定义此书房的讨论视角" in system_prompt
+        assert "在矛盾处停留的提问者" in system_prompt
+        assert "先问读者停在何处" in system_prompt
     finally:
         request(
             "PATCH",

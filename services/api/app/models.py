@@ -222,6 +222,11 @@ class LibraryBookCreate(BaseModel):
     spoiler_policy: SpoilerPolicy = SpoilerPolicy.AVOID
     companion_stance: CompanionStance = CompanionStance.EXPLORE
     room_intent: str | None = Field(default=None, max_length=1000)
+    room_role_name: str | None = Field(default=None, max_length=120)
+    room_role_focus: str | None = Field(default=None, max_length=500)
+    room_role_principles: list[str] = Field(default_factory=list, max_length=6)
+    room_role_moves: list[str] = Field(default_factory=list, max_length=6)
+    room_role_avoidances: list[str] = Field(default_factory=list, max_length=6)
     tags: list[str] = Field(default_factory=list, max_length=20)
 
 
@@ -236,6 +241,11 @@ class LibraryBookPatch(BaseModel):
     spoiler_policy: SpoilerPolicy | None = None
     companion_stance: CompanionStance | None = None
     room_intent: str | None = Field(default=None, max_length=1000)
+    room_role_name: str | None = Field(default=None, max_length=120)
+    room_role_focus: str | None = Field(default=None, max_length=500)
+    room_role_principles: list[str] | None = Field(default=None, max_length=6)
+    room_role_moves: list[str] | None = Field(default=None, max_length=6)
+    room_role_avoidances: list[str] | None = Field(default=None, max_length=6)
     tags: list[str] | None = Field(default=None, max_length=20)
 
 
@@ -251,6 +261,11 @@ class LibraryBook(BaseModel):
     spoiler_policy: SpoilerPolicy
     companion_stance: CompanionStance
     room_intent: str | None
+    room_role_name: str | None
+    room_role_focus: str | None
+    room_role_principles: list[str]
+    room_role_moves: list[str]
+    room_role_avoidances: list[str]
     tags: list[str]
     document_count: int
     note_count: int

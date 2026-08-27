@@ -795,6 +795,97 @@ summary:focus-visible {
   grid-column: 1 / -1;
 }
 
+.room-role-builder {
+  grid-column: 1 / -1;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--paper) 84%, var(--clay-light));
+}
+
+.room-role-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 13px;
+}
+
+.room-role-heading h4,
+.room-role-heading p {
+  margin: 0;
+}
+
+.room-role-heading h4 {
+  font-family: var(--serif);
+  font-size: 18px;
+}
+
+.room-role-heading p,
+.room-role-heading small {
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.room-role-heading p {
+  margin-top: 3px;
+}
+
+.room-role-heading small {
+  max-width: 220px;
+  text-align: right;
+}
+
+.room-role-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.room-role-fields label {
+  display: grid;
+  gap: 5px;
+}
+
+.room-role-fields label > span {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.room-role-fields input,
+.room-role-fields textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--paper-light);
+  color: var(--ink);
+  outline: 0;
+  font: inherit;
+  font-size: 13px;
+}
+
+.room-role-fields input {
+  height: 38px;
+  padding: 0 11px;
+}
+
+.room-role-fields textarea {
+  min-height: 82px;
+  padding: 10px 11px;
+  resize: vertical;
+}
+
+.room-role-fields input:focus,
+.room-role-fields textarea:focus {
+  border-color: var(--clay);
+}
+
+.room-role-wide {
+  grid-column: 1 / -1;
+}
+
 .book-room-form button,
 .reading-capture-form button {
   justify-self: start;
@@ -3018,6 +3109,25 @@ summary:focus-visible {
   .book-room-intent,
   .reading-capture-form textarea {
     grid-column: auto;
+  }
+
+  .room-role-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .room-role-wide {
+    grid-column: auto;
+  }
+
+  .room-role-heading {
+    display: block;
+  }
+
+  .room-role-heading small {
+    display: block;
+    max-width: none;
+    margin-top: 7px;
+    text-align: left;
   }
 
   .library-book-form select,
